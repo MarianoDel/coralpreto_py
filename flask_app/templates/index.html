@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>CESTO INTELIGENTE</title>
+    <link rel="stylesheet" type="text/css"  href="{{ url_for('static',filename='style.css')}}" >  
+  </head>
+  <body>
+    <!-- page content -->
+    <h1>CESTO INTELIGENTE</h1>
+    <h2>Proyecto Final Esteban Vines</h2>
+    <h2>UdeMM - Universidad de la Marina Mercante</h2>
+    <img src="/static/logo_udemm.jpeg" alt="Logo Facu" style="width:200px;height:200px;">
+
+    <audio controls>
+      <source src="{{ url_for('audio') }}" type="audio/x-wav;codec=pcm">
+        Your browser doesnt support it
+    </audio>
+    <p>Elija la acción a seguir:</p>
+    <a href='/carrito'>
+      <button class="button button1">Ver Elementos en el Carrito</button>
+    </a>
+    <a href='/garbage'>
+      <button class="button button2">Ver Todo lo Consumido</button>
+    </a>
+    <a href='/clean_garbage'>
+      <button class="button button3">Limpiar Consumos</button>
+    </a>
+  </body>
+</html>

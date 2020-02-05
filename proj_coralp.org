@@ -1,0 +1,77 @@
+* ROADMAP Coralpetro
+
+** Instalar PyAudio
+   - para poder manejar archivos y buffers de audio
+
+   - con pip3 install pyaudio me dice que le falta una lib portaudio.h
+
+   - lo instalo directo de la pagina de portaudio, uso el paquete ponce para x86
+
+*** Script Test
+    - hago un test de dispositivos 
+
+*** Scripts de prueba con wav
+    https://riptutorial.com/python/topic/10627/pyaudio
+
+*** Wave Tutorial
+    https://nbviewer.jupyter.org/github/mgeier/python-audio/blob/master/audio-files/audio-files-with-wave.ipynb
+
+*** Para grabar audio con el mic
+    https://realpython.com/playing-and-recording-sound-python/
+
+*** Intro PyAudio
+    https://slides.com/jeancruypenynck/introduction-to-pyaudio/embed#/
+
+** Download audio or video from Youtube
+*** Como lo uso, si quiero solo el audio
+    youtube-dl --extract-audio --audio-format wav https://www.youtube.com/watch?v=kiMqDjazJwk
+
+*** youtube-dl
+    - Lo baje desde slackbuilds.org
+
+*** Necesito ffmpeg para convertir formatos de audio
+    - si quiero bajar y convertir con youtube-dl usa ffmpeg
+    - Lo bajo con slpkg, tarda bastante porque lo compila como lib
+
+*** Para escuchar o info del wav con SOX
+    - sox si esta instalado lo puedo llamar directamente con play
+      que es un wrapper
+    $ play 2minutos.wav
+
+    - info del header del archivo la puedo conseguir con soxi
+    $ soxi output.wav
+
+*** Para escuchar el wav con ffmpeg
+    - con ffmpeg instalado tengo el wrapper ffmplay
+    $ ffplay 2minutos.wav
+
+** Uso de wave lib-std de python
+   - docu original
+     https://docs.python.org/3/library/wave.html
+     
+   - buenos ejemplos de uso
+     http://blog.acipo.com/wave-generation-in-python/
+
+   - RIFF & WAV headers
+     http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html
+
+** Tomar audio por el mic
+
+* Things to be Done
+** DONE Manejar archivos y buffers de audio
+   CLOSED: [2020-02-04 Tue 08:59]
+** DONE Escuchar por mic grabar buffer o archivo
+   CLOSED: [2020-02-04 Tue 09:00]
+** TODO Enviar audio al control <audio> html
+** TODO Enviar mic al control <audio>
+** Armar un pipe o queue para compartir mic
+*** Para varias instancias de flask necesito compartir los mismos audio samples
+    El mismo origen de datos entre las instancias de flask
+
+** Pagina de inicio y logging
+** Pagina principal con control <audio> y usuarios loggeados
+** Pagina armar nuevo usuario
+** Base de datos usuarios y log
+** Graba archivos de audio?
+** Mejorar calidad del mic, se escucha mucho ruido de fondo
+
