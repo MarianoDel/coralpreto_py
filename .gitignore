@@ -1,4 +1,5 @@
 # ignore this files
 *.pyc
 *.pyo
+*.wav
 
