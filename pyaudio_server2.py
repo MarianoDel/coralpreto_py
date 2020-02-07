@@ -54,6 +54,7 @@ def start_server():
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     soc.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     soc.bind((server_host, server_port))
+
     soc.listen(4)
     print("Socket now listening")
 
@@ -65,6 +66,7 @@ def start_server():
         print("Connected with " + ip + ":" + port)
         try:
             t_s_client = threading.Thread(target=client_connect_handler, args=(connection, ip, port))
+            t_s_client.start()
         except:
             print("Thread did not start.")
 
@@ -86,7 +88,17 @@ def client_connect_handler(conn, ip, port):
         data_lock.release()
         conn.send(data)
 
-    conn.close()
+    # conn.close()
+    # print("on new thread")
+    # while True:
+    #     data = conn.recv(1024)
+    #     if not data:
+    #         print (f"closed conn: {ip}:{port}")
+    #         break
+
+    #     conn.send(b"hola")
+
+    # conn.close()
         
         
 if __name__ == "__main__":
