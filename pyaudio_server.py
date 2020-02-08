@@ -5,6 +5,9 @@ import wave
 import time
 import threading
 
+""" solo corro pyaudio en otro thread y envio muestras al parlante """
+""" armo el lock de global compartida """
+
 # Globals
 CHUNK = 1024
 data_stream = bytes()

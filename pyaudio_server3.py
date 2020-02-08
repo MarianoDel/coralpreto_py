@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 #usar python3
-import pyaudio
 import wave
 import time
 import threading
@@ -8,8 +7,7 @@ import socket
 from general_config import GeneralConfiguration
 
 """ Contesto los chunks del wav hasta terminar de leerlo """
-""" uso pyaudio como timing del wav """
-""" los chunks sincronizados los uso como globales """
+""" despues hago un rewind y si siguen preguntando sigo contestando """
 
 # Globals - configurations variables and constants
 conf = GeneralConfiguration
@@ -21,40 +19,7 @@ server_port = conf.pyaudio_server_port
 data_stream = bytes()
 data_lock = threading.Lock()
 
-def start_pyaudio ():
-    global data_stream
-
-    wf = wave.open(wav_file, 'rb')
-
-    # instantiate PyAudio (1)
-    p = pyaudio.PyAudio()
-
-    # open stream (2)
-    stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
-                    channels=wf.getnchannels(),
-                    rate=wf.getframerate(),
-                    output=True)
-
-    # read data
-    data = wf.readframes(CHUNK)
-
-    # play stream (3)
-    while len(data) > 0:
-        stream.write(data)
-
-        # save global values
-        data_lock.acquire()
-        data_stream = data
-        data_lock.release()
-
-        data = wf.readframes(CHUNK)
-
-    # stop stream (4)
-    stream.stop_stream()
-    stream.close()
-
-    # close PyAudio (5)
-    p.terminate()
+wf = wave.open(wav_file, 'rb')
 
 
 def start_server():
@@ -94,11 +59,20 @@ def client_connect_handler(conn, ip, port):
             print (f"closed conn: {ip}:{port}")
             break
 
-        data_lock.acquire()
-        data = data_stream
-        data_lock.release()
+        # data_lock.acquire()
+        # data = data_stream
+        # data_lock.release()
+        # conn.send(data)
+
+        data = wf.readframes(CHUNK)
+        if not data:
+            wf.rewind()
+            data = wf.readframes(CHUNK)
+            print("no more data, rewind...")
+
         conn.send(data)
 
+            
     # conn.close()
     # print("on new thread")
     # while True:
@@ -113,23 +87,7 @@ def client_connect_handler(conn, ip, port):
         
         
 if __name__ == "__main__":
-    t_pyaudio = threading.Thread(target=start_pyaudio)
-    t_pyaudio.start()
     t_server = threading.Thread(target=start_server)
     t_server.start()
-
-    new_data = bytes()
-    frames_num = 0
-    while t_pyaudio.is_alive():
-
-        if new_data != data_stream:
-            frames_num += 1
-            # print (f"new_frame: {frames_num}")
-            data_lock.acquire()
-            new_data = data_stream
-            data_lock.release()
-
-
-    print (f"ended bytes count: {frames_num * CHUNK}")
-    t_pyaudio.join()
+    t_server.join()
 
