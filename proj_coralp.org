@@ -7,6 +7,19 @@
 
    - lo instalo directo de la pagina de portaudio, uso el paquete ponce para x86
 
+** Instalar PyAudio en Raspbian
+   You can compile PortAudio directly on the Raspberry Pi.
+   PortAudio uses ALSA. So you will need to install the ALSA developer library
+   $ sudo apt-get install libasound-dev
+
+   I recommend using the nightly snapshot of PortAudio V19 from http://www.portaudio.com/download.html
+
+   Then compile PortAudio and the examples.
+   $ cd portaudio
+   $ ./configure
+   $ make
+   $ sudo make install
+
 *** Script Test
     - hago un test de dispositivos 
 
@@ -69,9 +82,88 @@
     El mismo origen de datos entre las instancias de flask
 
 ** Pagina de inicio y logging
+   https://pythonspot.com/login-authentication-with-flask/
+
+   https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-v-user-logins   
+
+   https://flask-login.readthedocs.io/en/latest/
+
+   https://stackoverflow.com/questions/54992412/flask-login-usermixin-class-with-a-mongodb
+
+
 ** Pagina principal con control <audio> y usuarios loggeados
 ** Pagina armar nuevo usuario
 ** Base de datos usuarios y log
 ** Graba archivos de audio?
 ** Mejorar calidad del mic, se escucha mucho ruido de fondo
 
+
+* MongoDB Pymongo
+  https://api.mongodb.com/python/current/tutorial.html#tutorial
+
+  https://stackoverflow.com/questions/41514896/how-can-i-use-mongodb-with-flask
+
+
+* Varios Links de Flask
+** flask werkzeug multiple connections
+   https://stackoverflow.com/questions/14814201/can-i-serve-multiple-clients-using-just-flask-app-run-as-standalone
+
+   https://stackoverflow.com/questions/43180733/handle-multiple-connections-in-flask-api
+
+   app.run(host='0.0.0.0', debug=True, threaded=True)
+** socket.io
+   https://socket.io/
+
+   https://www.npmjs.com/package/socket.io-stream
+
+   https://nodejs.org/api/stream.html
+
+   https://github.com/substack/stream-handbook
+
+   https://stackoverflow.com/questions/28394340/how-to-play-a-sound-from-a-socket-io-event
+
+
+** audio control and stream audio html5
+   http://www.diva-portal.org/smash/get/diva2:1023478/FULLTEXT02.pdf
+
+   https://gabrieltanner.org/blog/webrtc-video-broadcast
+
+   https://buildthings.wordpress.com/remote-ham-radio-base-station-voip-web-auio-api-html5-audio-node-js-server-raspberry-pi/
+
+** por el reproductor
+   https://apiko.com/blog/audio-file-streaming-in-js/
+
+** socket.io and audio control
+   https://medium.com/@saurssaurav33/how-to-make-a-browser-walkie-talkie-using-node-js-and-socket-io-ae024bb9b378
+
+* Flask multiple pages multiple stylesheets
+** Paginas
+   - Dentro de /template
+   - en el template del html, dentro del header, hacer referencia al style que uso
+
+   <html>
+   <head>
+   <link rel= "stylesheet" type= "text/css" href= "../styles/mainpage.css">
+   </head>
+   <body>
+   <!-- content --> 
+
+   - tipicamente para que jinja funcione mejor
+     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='mainpage.css') }}">
+
+** Stylesheets
+   - Dentro de /static pondo los .css con los nombres de los links de las paginas
+
+
+
+** input overflow (veo el defaultSampleRate)
+   >>> import pyaudio
+   >>> audio_dev = pyaudio.PyAudio()
+   >>> audio_dev.get_device_info_by_index(0)['defaultSampleRate']
+   >>> 44100.0
+
+** cada tanto se corta el audio, cada 10min aprox
+   - es un tema con pyaudio
+   cuando leo el chunck con read, le paso un flag para que no me salte el error
+
+   currChunk = audio_stream.read(CHUNK, exception_on_overflow=True)

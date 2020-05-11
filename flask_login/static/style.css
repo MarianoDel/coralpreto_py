@@ -1,0 +1,110 @@
+* {
+    margin: 0px;
+    padding: 0px;
+    box-sizing: border-box;
+}
+
+*:focus {
+outline: none;
+}
+
+header {
+    min-height: 20vh;
+    align-items: center;
+    margin-top: 2vh;
+    margin-left: 2vw;
+    font-size: 3vh;
+}
+
+body {
+    font-family: Arial;
+    background-color: #3498DB;
+    background-image: url("pilotage3.png");
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+.login {
+    /* margin: 20px auto; */
+    margin: 2vh auto;    
+    /* width: 300px; */
+    width: 25vw;    
+}
+.login-screen {
+background-color: #FFF;
+/* padding: 20px; */
+padding: 4vh;
+border-radius: 5px;
+}
+
+.app-title {
+text-align: center;
+color: #777;
+}
+
+.login-form {
+text-align: center;
+}
+.control-group {
+    /* margin-bottom: 10px; */
+    margin-bottom: 1.5vh;    
+}
+
+input {
+text-align: center;
+background-color: #ECF0F1;
+border: 2px solid transparent;
+border-radius: 3px;
+/* font-size: 16px; */
+font-size: 2.5vh;
+font-weight: 200;
+/* padding: 10px 0; */
+padding: 2vh 0;
+/* width: 250px; */
+width: 20vw;
+transition: border .5s;
+}
+
+input:focus {
+border: 2px solid #3498DB;
+box-shadow: none;
+}
+
+.btn {
+border: 2px solid transparent;
+background: #3498DB;
+color: #ffffff;
+/* font-size: 16px; */
+font-size: 2.5vh;
+line-height: 25px;
+/* padding: 10px 0; */
+padding: 2vh 0;
+text-decoration: none;
+text-shadow: none;
+border-radius: 3px;
+box-shadow: none;
+transition: 0.25s;
+display: block;
+/* width: 250px; */
+width: 20vw;
+margin: 0 auto;
+}
+
+.btn:hover {
+background-color: #2980B9;
+}
+
+/* .login-link { */
+/* font-size: 12px; */
+/* color: #444; */
+/* display: block; */
+/* margin-top: 12px; */
+/* } */
+
+footer {
+    /* background: lightblue; */
+    text-align: right;
+    position: absolute;
+    bottom: 2vh;
+    right: 2vw;
+    font-size: 3vh;
+}

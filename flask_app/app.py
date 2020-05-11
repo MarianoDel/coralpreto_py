@@ -1,5 +1,6 @@
-from flask import Flask, Response, render_template
+from flask import Flask, Response, render_template, request, flash
 import pyaudio
+import os
 
 app = Flask(__name__)    #toma el nombre del archivo que corre
 
@@ -62,7 +63,22 @@ def audio():
     return Response(sound())
 
 
+@app.route('/login', methods=['GET', 'POST'])
+def do_admin_login():
+    if request.method == 'GET':
+        return render_template("login.html")
+    
+    if request.form['password'] == 'password' and request.form['username'] == 'admin':
+        # session['logged_in'] = True
+        flash('password OK!')
+    else:
+        flash('wrong password!')
+
+    return index()
+
+
 if __name__ == "__main__":
+    app.secret_key = os.urandom(12)
     app.run(host='0.0.0.0', debug=True)    #lo corro en modo debug para conocer errores
 
     

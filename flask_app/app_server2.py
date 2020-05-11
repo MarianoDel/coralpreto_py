@@ -98,6 +98,8 @@ def audio():
     return Response(AudioInnerLoop(), mimetype='audio/x-wav')
 
 
+
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)    #lo corro en modo debug para conocer errores
 
