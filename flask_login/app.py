@@ -70,7 +70,7 @@ def audio():
         send_header = True
 
         while True:
-            currChunk = audio_stream.read(CHUNK, , exception_on_overflow=True)
+            currChunk = audio_stream.read(CHUNK, exception_on_overflow=True)
 
             if send_header:
                 data_to_stream = wav_header + currChunk

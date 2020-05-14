@@ -154,8 +154,6 @@
 ** Stylesheets
    - Dentro de /static pondo los .css con los nombres de los links de las paginas
 
-
-
 ** input overflow (veo el defaultSampleRate)
    >>> import pyaudio
    >>> audio_dev = pyaudio.PyAudio()
@@ -167,3 +165,34 @@
    cuando leo el chunck con read, le paso un flag para que no me salte el error
 
    currChunk = audio_stream.read(CHUNK, exception_on_overflow=True)
+
+* Flask socket io
+** Instalacion
+   pip3 install flask-socketio
+
+** Manual
+   https://flask-socketio.readthedocs.io/en/latest/
+
+** Funcionamiento con Audio Control
+   After lots research and tinkering I finally found the solution.
+   Basically it came down to serving pyaudio.paFloat32 audio data through 
+   WebSockets using Flask's SocketIO implementation and receiving/playing
+   the data in JavaScript using HTML5's AudioContext.
+
+   As this is requires quite some code, I think it would not be a good 
+   idea to post it all here. Instead, feel free to check out the project 
+   I'm using it in: simpleCam
+   https://github.com/paranerd/simplecam
+
+   The relevant code is in: 
+   - noise_detector.py (recording) 
+   - server.py (WebSocket transfer) 
+   - static/js/player.js (receiving/playing)
+
+   Thanks everyone for the support!
+   Stream audio from pyaudio with Flask to HTML5
+   https://stackoverflow.com/questions/47106364/stream-audio-from-pyaudio-with-flask-to-html5
+
+** Conectar un Button HTML con JavaScript
+   https://stackoverflow.com/questions/1947263/using-an-html-button-to-call-a-javascript-function
+

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
+    <meta charset="utf-8">
+    <title>Prueba</title>
+    <link rel="stylesheet" type="text/css"  href="{{ url_for('static',filename='style.css')}}" >  
+  </head>
+  <body>
+    <!-- JS Content -->
+    <script type="text/javascript">
+      var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+      socket.on( 'connect', function() {
+        socket.emit( 'my event', {
+        data: 'User Connected'
+        })
+      })
+
+      socket.on( 'messages_list', function(msg) {      
+      $( 'div.message_holder' ).append(
+      '<div><b style="color: #000">'+msg.user_name+'</b> '+msg.message+'</div>'
+      )
+      })
+      
+      function button1Function() {
+        socket.emit( 'my event', {
+        data: 'Button 1 Pressed'
+        })
+      }
+    </script>
+    <!-- page content -->
+    <h1>PRUEBA CONTROL AUDIO (SocketsIO)</h1>
+    <h2>Proyecto VHF por IP</h2>
+
+    <p>Elija la acción a seguir:</p>
+    <button onclick="button1Function()" class="button button1">Button 01</button>
+    <a href='/garbage'>
+      <button class="button button2">Button 02</button>
+    </a>
+    <a href='/clean_garbage'>
+      <button class="button button3">Button 03</button>
+    </a>
+    <h2>Messages from server:</h2>
+    <div class="message_holder"></div>
+
+  </body>
+</html>
