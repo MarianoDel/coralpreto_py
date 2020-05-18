@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
     <meta charset="utf-8">
     <title>Prueba</title>
@@ -18,32 +17,105 @@
         })
       })
 
-      socket.on( 'messages_list', function(msg) {      
-      $( 'div.message_holder' ).append(
-      '<div><b style="color: #000">'+msg.user_name+'</b> '+msg.message+'</div>'
-      )
+      socket.on( 'messages_list', function(msg) {
+      var msg_holder = document.getElementById('message_holder');
+      const last_content = msg_holder.innerHTML;
+      msg_holder.innerHTML = last_content
+      + '<div><b style="color: #000">'+msg.user_name+'</b> '+msg.message+'</div>';
       })
+
+      function createSoundSource(audioData) {
+      var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      //copy - paste
+      //var view = new Int16Array(event.data);
+      //var viewf = new Float32Array(view.length);
+      //
+      //audioBuffer = audioCtx.createBuffer(1, viewf.length, 22050);
+      //audioBuffer.getChannelData(0).set(viewf);
+      //source = audioCtx.createBufferSource();
+      //source.buffer = audioBuffer;
+      //source.connect(audioCtx.destination);
+      //source.start(0);
+
+      var audiobuf = new Int16Array(audioData);
+      console.log('audiobuf[0]: '+ audiobuf[0]);
+
+      //audioBuffer = audioCtx.createBuffer(1, audiobuf_f.length, 44100);
+      //audioBuffer.getChannelData(0).set(audiobuf_f);
+
+      //genero senoidal de 200Hz a 44100Hz, un segundo de largo
+      const freq = 200;
+      const samplerate = 44100;
+      const secs = 1;
+      
+      var senbuf = new Int16Array(samplerate * secs);
+      console.log('senbuf.len: '+ senbuf.length);
+
+      audioBuffer = audioCtx.createBuffer(1, senbuf.length, samplerate);
+      var samples_ref = audioBuffer.getChannelData(0);
+
+      for (var i = 0; i < senbuf.length; i++) {
+                          samples_ref[i] = Math.sin(6.28 * 200 * i / samplerate);
+                          }      
+      
+      source = audioCtx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioCtx.destination);
+      source.start(0);
+      }
+      
+      socket.on('audio', function(msg) {
+      var chunks = [];
+      chunks = msg.data;
+      //console.log('msg length: ' + chunks.length);
+      createSoundSource(chunks);
+      })
+
       
       function button1Function() {
         socket.emit( 'my event', {
         data: 'Button 1 Pressed'
         })
       }
+
+      function button2Function() {      
+      var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      var oscillator = audioCtx.createOscillator();
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // value in hertz
+      oscillator.connect(audioCtx.destination);
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 1); // stop 1 seconds after the current time
+      }
+
+      function initAudioBuffer() {
+      const soundSource = context.createBufferSource();
+      soundSource.buffer = soundBuffer;
+      soundSource.connect(context.destination);
+      soundSource.start(0);
+      }
+      
+      function button3Function() {      
+      socket.emit( 'my event', {
+      data: 'Button 3 Pressed'
+      })
+      }
+      
     </script>
     <!-- page content -->
     <h1>PRUEBA CONTROL AUDIO (SocketsIO)</h1>
     <h2>Proyecto VHF por IP</h2>
 
+    <!-- audio control -->
+    <audio controls></audio>
+
     <p>Elija la acción a seguir:</p>
     <button onclick="button1Function()" class="button button1">Button 01</button>
-    <a href='/garbage'>
-      <button class="button button2">Button 02</button>
-    </a>
-    <a href='/clean_garbage'>
-      <button class="button button3">Button 03</button>
-    </a>
+    <button onclick="button2Function()" class="button button2">Button 02</button>
+    <button onclick="button3Function()" class="button button3">Button 03</button>
     <h2>Messages from server:</h2>
-    <div class="message_holder"></div>
+    <div id="message_holder"></div>
 
   </body>
 </html>
