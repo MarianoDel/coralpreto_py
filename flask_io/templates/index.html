@@ -39,25 +39,34 @@
       //source.start(0);
 
       var audiobuf = new Int16Array(audioData);
-      console.log('audiobuf[0]: '+ audiobuf[0]);
+      //console.log('audiobuf[0]: '+ audiobuf[0]);
 
-      //audioBuffer = audioCtx.createBuffer(1, audiobuf_f.length, 44100);
+      // creo el buffer de audio, pido referencia y le copio las muestras
+      audioBuffer = audioCtx.createBuffer(1, audiobuf.length, 44100);
+      var samples_ref = audioBuffer.getChannelData(0);
+
+      for (var i = 0; i < audiobuf.length; i++) {
+                          samples_ref[i] = audiobuf[i] / 32768;
+                          //samples_ref[i] = audiobuf[i];                          
+                          }      
+
       //audioBuffer.getChannelData(0).set(audiobuf_f);
 
       //genero senoidal de 200Hz a 44100Hz, un segundo de largo
-      const freq = 200;
-      const samplerate = 44100;
-      const secs = 1;
+      //const freq = 200;
+      //const samplerate = 44100;
+      //const secs = 10;
+      //const amplitude = 0.5;
       
-      var senbuf = new Int16Array(samplerate * secs);
-      console.log('senbuf.len: '+ senbuf.length);
+      //var senbuf = new Int16Array(samplerate * secs);
+      //console.log('senbuf.len: '+ senbuf.length);
 
-      audioBuffer = audioCtx.createBuffer(1, senbuf.length, samplerate);
-      var samples_ref = audioBuffer.getChannelData(0);
+      //audioBuffer = audioCtx.createBuffer(1, senbuf.length, samplerate);
+      //var samples_ref = audioBuffer.getChannelData(0);
 
-      for (var i = 0; i < senbuf.length; i++) {
-                          samples_ref[i] = Math.sin(6.28 * 200 * i / samplerate);
-                          }      
+      //for (var i = 0; i < senbuf.length; i++) {
+      //                    samples_ref[i] = amplitude * Math.sin(6.28 * freq * i / samplerate);
+      //                    }      
       
       source = audioCtx.createBufferSource();
       source.buffer = audioBuffer;
