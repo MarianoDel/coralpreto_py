@@ -17,20 +17,21 @@ socketio = SocketIO(app)
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
-CHUNK = 1024
+CHUNK = RATE * 2
 BITSPERSAMPLE = 16
 audio_dev = pyaudio.PyAudio()
 playing = False
 yourThread = threading.Thread()
 
-freq = 100
+freq = 440
 samplerate = 44100
-time = 2
+time = 1.5
+amplitude = 1.0
 frames_qtty = int(samplerate * time)
 # generate audio data
-data = np.zeros(frames_qtty, dtype=np.int16)
+data = np.zeros(frames_qtty, dtype=np.float32)
 for i in range(frames_qtty):
-    data[i] = int(np.sin(np.pi * 2 * freq * i / samplerate) * 32767)
+    data[i] = np.sin(np.pi * 2 * freq * i / samplerate) * amplitude
 
 data_bytes = data.tobytes()
 
@@ -82,8 +83,15 @@ def handle_my_custom_event(json):
         socketio.emit('messages_list', {'user_name': 'MED', 'message': 'todo way'})
 
     if json['data'] == 'Button 3 Pressed':
+        ######################################
+        # Prueba con un data binario acotado #
+        ######################################
         # key = b'\x13\0\0\0\x08\0'
         # socketio.emit('audio', {'data': key})
+        
+        ######################################################
+        # Prueba con un chunk conocido y callbacks por timer #
+        ######################################################
         if playing != True:
             playing = True
             print("recording...")
@@ -91,7 +99,10 @@ def handle_my_custom_event(json):
         else:
             print("stop recording")
             playing = False
-        
+
+        ##############################################
+        # Envia lo conseguido en el mic por callback #
+        ##############################################
         # if playing != True:
         #     playing = True
         #     print("recording...")
@@ -160,5 +171,5 @@ def some_function():
 
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, host='0.0.0.0', debug=True)
 
