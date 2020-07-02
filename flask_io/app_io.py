@@ -80,7 +80,10 @@ def handle_my_custom_event(json):
     
     print('received json: ' + str(json))
     if json['data'] == 'Button 1 Pressed':
-        socketio.emit('messages_list', {'user_name': 'MED', 'message': 'todo way'})
+        socketio.emit('messages_list', {'user_name': 'MED', 'message': 'todo way'} \
+        'user_name': 'juan', 'message': 'todo way'} \
+        'user_name': 'pepe', 'message': 'todo way'} \
+        )
 
     if json['data'] == 'Button 3 Pressed':
         ######################################
@@ -88,6 +91,9 @@ def handle_my_custom_event(json):
         ######################################
         # key = b'\x13\0\0\0\x08\0'
         # socketio.emit('audio', {'data': key})
+
+        #cambiar el canal radio
+        #enviar evento de nueva tabla
         
         ######################################################
         # Prueba con un chunk conocido y callbacks por timer #

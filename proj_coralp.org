@@ -196,3 +196,11 @@
 ** Conectar un Button HTML con JavaScript
    https://stackoverflow.com/questions/1947263/using-an-html-button-to-call-a-javascript-function
 
+
+* 27-06-2020 usando flask-io/app_io.py
+** Logging muy importante
+   - que el que escucha no pueda cambiar canales
+
+*** O por lo menos emitir desde IO quien hizo el ultimo cambio
+** Mover canales con botones
+** Seguir probando buffers Play/Pause

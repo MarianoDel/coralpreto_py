@@ -23,12 +23,17 @@ socket.on( 'connect', function() {
 })
 
 socket.on( 'messages_list', function(msg) {
-    var msg_holder = document.getElementById('message_holder');
-    const last_content = msg_holder.innerHTML;
-    msg_holder.innerHTML = last_content
-        + '<div><b style="color: #000">'+msg.user_name+'</b> '+msg.message+'</div>';
+    armar_tabla(msg)
+    <!-- var msg_holder = document.getElementById('message_holder'); -->
+    <!-- const last_content = msg_holder.innerHTML; -->
+    <!-- msg_holder.innerHTML = last_content -->
+    <!--     + '<div><b style="color: #000">'+msg.user_name+'</b> '+msg.message+'</div>'; -->
 })
 
+function armar_tabla (message) {
+//html
+
+}
 function createSoundSource(audioData) {
     //var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 

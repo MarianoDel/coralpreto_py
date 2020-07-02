@@ -1,9 +1,13 @@
 from flask import Flask
-from flask import Flask, flash, redirect, render_template, request, session, abort, Response
+from flask import Flask, flash, redirect, render_template, request, session, abort, Response, url_for
+from flask_socketio import SocketIO
+import json
 import pyaudio
 import os
 
 app = Flask(__name__)
+app.secret_key = os.urandom(12)
+socketio = SocketIO(app)
 
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
@@ -37,19 +41,71 @@ def genHeader(sampleRate, bitsPerSample, channels):
 @app.route('/')
 def home():
     if not session.get('logged_in'):
-        return render_template('login.html')
+        return redirect(url_for('do_admin_login'), code=302)
     else:
-        return render_template('index.html')
+        # session['key0'] = request.args.get('session')
+        return render_template('registrado.html')
 
     
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def do_admin_login():
-    if request.form['password'] == 'password' and request.form['username'] == 'admin':
-        session['logged_in'] = True
-    else:
-        flash('wrong password!')
-    return home()
+    if request.method == 'GET':
+        return render_template('login.html')
 
+    if request.method == 'POST':
+        if (request.form['psw'] == 'password' and request.form['uname'] == 'admin') or \
+           (request.form['psw'] == 'maxi' and request.form['uname'] == 'Maximiliano'):
+            session['username'] = request.form['uname']
+            session['logged_in'] = True
+        else:
+            flash('wrong password!')
+        return redirect(url_for('home'), code=302)
+
+
+
+""" 
+    Socket-IO
+    The names message, json, connect and disconnect are reserved and cannot be used for named events
+"""
+
+@socketio.on('connect')
+def test_connect():
+    print('Client Connected!')
+    dict_data = {"nombre" : session.get('username'), "comentario" : "ultimo", "status" : "1" }
+    json_data = '[' + json.dumps(dict_data) + ']'
+    print (json_data)
+    socketio.emit('tabla', json_data)
+
+
+
+@socketio.on('disconnect')
+def test_disconnect():
+    print('Client disconnected')
+
+
+@socketio.on('botones')
+def handle_message(message):
+    print('received message: ' + str(message))
+
+    # cambiar el canal aca
+    if message['data'] == '09' or \
+       message['data'] == '12' or \
+       message['data'] == '14' or \
+       message['data'] == '71' or \
+       message['data'] == '72' or \
+       message['data'] == '74' or \
+       message['data'] == '77' or \
+       message['data'] == '81':
+        
+        phrase = "change channel to " + str(message['data'])
+        dict_data = {"nombre" : session.get('username'), "comentario" : phrase, "status" : "1" }
+        json_data = '[' + json.dumps(dict_data) + ']'
+        print (json_data)
+        socketio.emit('tabla', json_data)
+
+
+        
+    
 
 # CADA VEZ QUE ACTIVAN EL CONTROL DEBO ABRIR EL MIC
 # ESTO LO PUEDO VER CON RECORDING...
@@ -85,6 +141,7 @@ def audio():
 
 
 if __name__ == "__main__":
-    app.secret_key = os.urandom(12)
-    app.run(debug=True,host='0.0.0.0', port=5000)    #    app.run(host='0.0.0.0', debug=True, threaded=True)
+    # app.secret_key = os.urandom(12)
+    # app.run(debug=True,host='0.0.0.0', port=5000)    #    app.run(host='0.0.0.0', debug=True, threaded=True)
+    socketio.run(app, host='0.0.0.0', debug=True)
 

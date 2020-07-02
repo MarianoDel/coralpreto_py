@@ -4,34 +4,33 @@
 You're logged in already!
 
 {% else %}
-<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='login.css') }}">
-<header>
-  <h1>CoralPetro</h1>
-  <p>Sistema de Comunicaciones VHF por IP</p>
-</header>
-    
-<form action="/login" method="POST">
-  <div class="login">
-    <div class="login-screen">
-      <div class="app-title">
-        <h1>Login</h1>
-      </div>
-      <div class="login-form">
-        <div class="control-group">
-	  <input type="text" class="login-field" value="" placeholder="username" name="username">
-          <label class="login-field-icon fui-user" for="login-name"></label>
-        </div>
-        <div class="control-group">
-	  <input type="password" class="login-field" value="" placeholder="password" name="password">
-          <label class="login-field-icon fui-lock" for="login-pass"></label>
-        </div>
-        <input type="submit" value="Log in" class="btn btn-primary btn-large btn-block">
-      </div>
-    </div>
-  </div>  
-</form>
-<footer>
-  <p>Power by: Kirno Technology</p>
-</footer>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<link rel="stylesheet" type="text/css"  href="static/estilos.css">
+	<title>Login - Pilot Age SA</title>
+</head>
+<body>
+	<div id="container">
+		<aside class="form_container">
+			<form action="" method="post">
+				<div>
+					<img src="static/Logo_Pilotage.jpg" alt="Logo Pilot Age SA">
+				</div>
+				<input type="text" placeholder="USER" name="uname" required>
+				<input type="password" placeholder="PASSWORD" name="psw" required>
+				<input type="submit" value="LOGIN">
+			</form>
+		</aside>
+		<footer>
+			<p>Powered by</p>
+			<div id="logo_kirno"></div>
+		</footer>
+	</div>
+</body>
+</html>
 {% endif %}
 {% endblock %}

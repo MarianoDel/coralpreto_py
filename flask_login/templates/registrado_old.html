@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<link rel="stylesheet" href="static/css/estilos.css">
+	<link rel="stylesheet" href="static/css/styles.css">
+	<title>Registrado - Pilot Age SA</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
+</head>
+<body>
+	<div id="wrap_registrado">
+		<div id="wrap_registrado_logo">
+			<img src="static/img/Logo_Pilotage.jpg" alt="Logo Pilot Age SA">	
+		</div>
+		<div id="wrap_registrado_a">
+			<h2><span>1</span> Pick a Channel</h2>
+			<div class="info_botones">
+				<div>
+					<span class="tx_rx_ch">Channel:</span> <span id="channel"></span>
+				</div>
+				<div>
+					<span class="tx_rx_ch">Tx:</span> <span id="tx"></span> MHz.
+				</div> 
+				<div>
+					<span class="tx_rx_ch">Rx:</span> <span id="rx"></span> MHz.
+				</div>				
+			</div>
+			<div id="wrap_botones"></div>
+		</div>
+		<div id="wrap_registrado_b">
+			<h2><span>2</span> Press Play</h2>
+			<button id="play" onclick="myFunction()"></button>
+		</div>
+		<div id="wrap_registrado_c">
+			<h2><span>3</span> Push to Talk</h2>
+			<button class="botone_ptt">PTT</button>
+			<!-- 
+			<div class="audio-viz">
+			    <h1 class="audio-viz__title">Queres escuchar radio deleu??</h1>
+
+			    <form class="audio-viz__form">
+				    <input type="radio" class="audio-viz__radio" id="senventies" name="radio-selection" value="http://ice4.somafm.com/metal-128-aac" checked>
+				    <label for="senventies"><span></span>Metal Detector</label>
+
+				    <input type="radio" class="audio-viz__radio" id="eighties" name="radio-selection" value="http://ice3.somafm.com/u80s-128-aac">
+				    <label for="eighties"><span></span>Underground 80s</label>
+
+				    <input type="radio" class="audio-viz__radio" id="deep-space" name="radio-selection" value="http://ice6.somafm.com/reggae-128-aac">
+				    <label for="deep-space"><span></span>Reggae</label>
+			    </form>
+
+			    <canvas id="oscilloscope"></canvas>
+			    <button class="audio-viz__btn" id="start">Start Audio</button>
+			</div>
+			-->
+		</div>
+
+		<div id="wrap_registrado_d">
+			<h2><span class="icon-user-1"></span> Users</h2>
+			<table id="usuarios">
+			  <tr>
+			    <th>Full Name</th>
+			    <th>Comentario</th>
+			    <th>Status</th>
+			  </tr>
+			</table>
+		</div>
+	</div>
+	<script src="static/js/codigo.js"></script>
+	<script src="static/js/visualizer.js"></script>
+</body>
+</html>
