@@ -5,6 +5,11 @@ import json
 import pyaudio
 import os
 
+### GLOBALS FOR CONFIGURATION #########
+## OS where its run
+RUNNING_ON_SLACKWARE = 1
+RUNNING_ON_RASP = 0
+
 app = Flask(__name__)
 app.secret_key = os.urandom(12)
 socketio = SocketIO(app)
@@ -18,6 +23,15 @@ BITSPERSAMPLE = 16
 # RECORD_SECONDS = 5
 
 audio_dev = pyaudio.PyAudio()
+
+## init of gpios and steady state
+if RUNNING_ON_RASP:
+    import gpios
+    GpiosInit()
+    PttOff()
+    LedBlueOff()
+    OnOff_On()
+    Channel_to_Memory('12')
 
 
 def genHeader(sampleRate, bitsPerSample, channels):
@@ -102,6 +116,9 @@ def handle_message(message):
         json_data = '[' + json.dumps(dict_data) + ']'
         print (json_data)
         socketio.emit('tabla', json_data)
+
+        if RUNNING_ON_RASP:
+            Channel_to_Memory(message['data'])
 
 
         
