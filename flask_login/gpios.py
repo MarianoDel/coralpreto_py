@@ -46,9 +46,20 @@ def LedBlueToggle():
     else:
         GPIO.output(LED_B, GPIO.LOW)
 
+already_toggling = 0
+def LedBlueToggleContinous(action):
+    global already_toggling
 
-def LedBlueToggleContinous():
-    start_new_thread(LedBlueToggle_Thread, ())
+    if action == 'start':
+        if not already_toggling:
+            already_toggling = 1
+            t = start_new_thread(LedBlueToggle_Thread, ())
+            
+    elif action == 'stop':
+        if already_toggling:
+            t.exit()
+            LedBlueOff()
+            already_toggling = 0
 
 
 def LedBlueToggle_Thread():
@@ -57,6 +68,7 @@ def LedBlueToggle_Thread():
         time.sleep(1.3)
         LedBlueOff()
         time.sleep(0.7)
+        
         
 ##############
 # ON/OFF Pin #

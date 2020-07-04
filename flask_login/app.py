@@ -90,11 +90,18 @@ def test_connect():
     print (json_data)
     socketio.emit('tabla', json_data)
 
+    if RUNNING_ON_RASP:
+        LedBlueToggleContinous('start')
+
 
 
 @socketio.on('disconnect')
 def test_disconnect():
     print('Client disconnected')
+
+    if RUNNING_ON_RASP:
+        LedBlueToggleContinous('stop')
+
 
 
 @socketio.on('botones')
