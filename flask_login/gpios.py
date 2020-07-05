@@ -57,7 +57,7 @@ def LedBlueToggleContinous(action):
             
     elif action == 'stop':
         if already_toggling:
-            t.exit()
+            # t.exit()    #TODO: mejorar esto, no sale o para la funcion
             LedBlueOff()
             already_toggling = 0
 

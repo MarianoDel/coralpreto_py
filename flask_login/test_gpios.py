@@ -5,7 +5,7 @@ import time
 RUNNING_ON_RASP = 0
 
 if RUNNING_ON_RASP:
-    import gpios
+    from gpios import *
     GpiosInit()
 
 
@@ -60,20 +60,30 @@ def TestEncendido():
     time.sleep(5)
 
     if RUNNING_ON_RASP:
-        OnOff_On()
+        OnOff_Off()
     
     print ("Encendido off")
     print ("test ended!")    
+
+
+def InitialValues ():
+    LedBlueOff()
+    PttOff()
+    OnOff_Off()
+    Bit0Off()
+    Bit1Off()
+    Bit2Off()
 
     
 ##############
 # Main Tests #
 ##############
+InitialValues()
 TestBlue()
 TestChannel()
 TestPtt()
 TestEncendido()
-
+GpiosCleanUp()
 
 
 
