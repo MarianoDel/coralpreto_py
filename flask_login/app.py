@@ -26,7 +26,7 @@ audio_dev = pyaudio.PyAudio()
 
 ## init of gpios and steady state
 if RUNNING_ON_RASP:
-    import gpios
+    from gpios import *
     GpiosInit()
     PttOff()
     LedBlueOff()

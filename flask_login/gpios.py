@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #usar python3
 import RPi.GPIO as GPIO
-from _thread import start_new_thread
+import threading
 import time
 
 ###########################################
@@ -46,24 +46,30 @@ def LedBlueToggle():
     else:
         GPIO.output(LED_B, GPIO.LOW)
 
+        
 already_toggling = 0
+t = treading.Thread()
 def LedBlueToggleContinous(action):
     global already_toggling
+    global t
 
     if action == 'start':
         if not already_toggling:
             already_toggling = 1
-            t = start_new_thread(LedBlueToggle_Thread, ())
+            t = threading.Thread(target=LedBlueToggle_Thread, args=())
+            t.start()
             
     elif action == 'stop':
         if already_toggling:
-            # t.exit()    #TODO: mejorar esto, no sale o para la funcion
+            t.do_run = False
             LedBlueOff()
             already_toggling = 0
+            t.join()
 
 
 def LedBlueToggle_Thread():
-    while True:
+    t = threading.currentThread()
+    while getattr(t, "do_run", True):
         LedBlueOn()
         time.sleep(1.3)
         LedBlueOff()
