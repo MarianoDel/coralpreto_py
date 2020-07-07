@@ -130,6 +130,11 @@ footer p {
 	flex-direction: column;
 }
 
+.apretado {
+    text-align: center;
+    font-size: 2em;
+}
+
 h2 {
 	display: -webkit-box;
 	display: -ms-flexbox;

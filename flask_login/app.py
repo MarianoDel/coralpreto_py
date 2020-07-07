@@ -5,6 +5,9 @@ import json
 import pyaudio
 import os
 
+import threading
+import numpy as np
+
 ### GLOBALS FOR CONFIGURATION #########
 ## OS where its run
 RUNNING_ON_SLACKWARE = 1
@@ -132,8 +135,6 @@ def handle_message(message):
         if RUNNING_ON_RASP:
             Channel_to_Memory(message['data'])
 
-
-        
     
 @socketio.on('ptt')
 def transmit(message):
@@ -148,41 +149,68 @@ def transmit(message):
             PttOff()
 
         print("PTT->OFF")
-        
-        
+
+
+################################
+# Rutinas de Audio lado Server #
+################################
+freq = 440
+samplerate = 44100
+timeloop = 1
+amplitude = 1.0
+frames_qtty = int(samplerate * timeloop)
+# generate audio data
+data = np.zeros(frames_qtty, dtype=np.float32)
+for i in range(frames_qtty):
+    data[i] = np.sin(np.pi * 2 * freq * i / samplerate) * amplitude
+
+data_bytes = data.tobytes()
+
+playing = False
+yourThread = threading.Thread()
+pckt_cnt = 0
+
+
+@socketio.on('audio')
+def play_or_pause(message):
+    global playing
     
+    if message['data'] == 'PLAY':
+        print("empezar audio por sockets")
+        if playing != True:
+            playing = True
+            print("recording...")
+            audio_generation_start()
+        
+    elif message['data'] == 'STOP':
+        print("terminar audio")
+        playing = False
 
-# CADA VEZ QUE ACTIVAN EL CONTROL DEBO ABRIR EL MIC
-# ESTO LO PUEDO VER CON RECORDING...
-@app.route('/audio')
-def audio():
-    # start Recording
-    print("recording...")
 
-    audio_stream = audio_dev.open(format=FORMAT,
-                              channels=CHANNELS,
-                              rate=RATE,
-                              frames_per_buffer=CHUNK,
-                              input=True)
+def audio_generation_start():
+    global yourThread
+    global pckt_cnt    
+    # Create your thread
+    yourThread = threading.Timer(0.05, audio_generation_callback, ())
+    yourThread.start()
+    pckt_cnt = 0
 
-    def AudioInnerLoop():
-        """Audio streaming generator function."""
-        wav_header = genHeader(RATE, BITSPERSAMPLE, CHANNELS)
-        send_header = True
 
-        while True:
-            currChunk = audio_stream.read(CHUNK, exception_on_overflow=True)
-
-            if send_header:
-                data_to_stream = wav_header + currChunk
-                send_header = False
-            else:
-                data_to_stream = currChunk
-
-            yield data_to_stream
-
-    # return Response(GetNewDataStream(), mimetype='audio/x-wav')
-    return Response(AudioInnerLoop(), mimetype='audio/x-wav')
+def audio_generation_callback():
+    global playing
+    global yourThread
+    global pckt_cnt
+    global data_bytes
+    global timeloop
+    
+    if playing == True:
+        # print (data)
+        socketio.emit('audio_rx', {'data': data_bytes})
+        # call next loop
+        yourThread = threading.Timer(timeloop, audio_generation_callback, ())
+        yourThread.start()
+        pckt_cnt = pckt_cnt + 1
+        print('gen: ' + str(pckt_cnt))
 
 
 if __name__ == "__main__":

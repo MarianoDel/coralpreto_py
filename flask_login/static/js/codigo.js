@@ -205,3 +205,107 @@ socket.on('boton_canal', function(msg) {
 	cambiaBoton(msg_canal);
 })
 
+var play_pause = 0;
+function play() {
+    if (play_pause == 0) {
+        play_pause = 1;
+        socket.emit( 'audio', {
+	    data: 'PLAY'
+        })
+    }
+    else {        
+        play_pause = 0;
+        socket.emit( 'audio', {
+	    data: 'STOP'
+        })
+    }        
+}
+
+var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+var nextStartTime = 0;
+var next_schedule = 0;
+
+socket.on('audio_rx', function(msg) {
+    var chunks = [];
+    chunks = msg.data;
+    console.log('msg length: ' + chunks.length);
+    createSoundSource(chunks);
+})
+
+
+function createSoundSource(audioData) {
+    //var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    //copy - paste
+    //var view = new Int16Array(event.data);
+    //var viewf = new Float32Array(view.length);
+    //
+    //audioBuffer = audioCtx.createBuffer(1, viewf.length, 22050);
+    //audioBuffer.getChannelData(0).set(viewf);
+    //source = audioCtx.createBufferSource();
+    //source.buffer = audioBuffer;
+    //source.connect(audioCtx.destination);
+    //source.start(0);
+
+    audioCtx.resume();
+    var audiobuf = new Float32Array(audioData);
+    //console.log('audiobuf[0]: '+ audiobuf[0]);
+
+    // creo el buffer de audio, pido referencia y le copio las muestras
+    audioBuffer = audioCtx.createBuffer(1, audiobuf.length, 44100);
+    var samples_ref = audioBuffer.getChannelData(0);
+    samples_ref.set(audiobuf);
+
+    //for (var i = 0; i < audiobuf.length; i++) {
+    //                    samples_ref[i] = audiobuf[i] / 32768;
+    //                    //samples_ref[i] = audiobuf[i];                          
+    //                    }      
+
+    //audioBuffer.getChannelData(0).set(audiobuf_f);
+
+    // genero senoidal de 200Hz a 44100Hz, un segundo de largo
+    // const freq = 200;
+    // const samplerate = 44100;
+    // const secs = 10;
+    // const amplitude = 0.5;
+      
+    //var senbuf = new Int16Array(samplerate * secs);
+    //console.log('senbuf.len: '+ senbuf.length);
+
+    //audioBuffer = audioCtx.createBuffer(1, senbuf.length, samplerate);
+    //var samples_ref = audioBuffer.getChannelData(0);
+    
+    //for (var i = 0; i < senbuf.length; i++) {
+    //                    samples_ref[i] = amplitude * Math.sin(6.28 * freq * i / samplerate);
+    //                    }      
+      
+    var source = audioCtx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(audioCtx.destination);
+    if (nextStartTime == 0) {
+        // este es el primer paquete
+        // me guardo el primer buffer y ajusto los contadores
+        schedule_time = audioBuffer.length / audioBuffer.sampleRate;              
+        nextStartTime = audioCtx.currentTime + schedule_time;
+        next_schedule = nextStartTime;
+        console.log('start schedule: '+ schedule_time);        
+    } else {
+        if (next_schedule < audioCtx.currentTime) {
+            //se agoto el primer buffer dejo pasar un schedule
+            nextStartTime = next_schedule + schedule_time;
+            console.log('next: '+next_schedule + 'current: '+ audioCtx.currentTime);
+        }
+        else {
+            // todavia tengo algo de buffer calculo el tiempo de comienzo del proximo chunk
+            nextStartTime = audioCtx.currentTime - next_schedule;
+            if (nextStartTime < 0)
+                nextStartTime = 0;
+            console.log('.');            
+        }
+        next_schedule += schedule_time;
+    }
+
+    source.start(nextStartTime);
+    nextStartTime += audioBuffer.length / audioBuffer.sampleRate;
+    //source.start(0);
+}

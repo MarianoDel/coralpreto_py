@@ -34,6 +34,7 @@ function armar_tabla (message) {
 //html
 
 }
+    
 function createSoundSource(audioData) {
     //var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -84,7 +85,7 @@ function createSoundSource(audioData) {
     source.buffer = audioBuffer;
     source.connect(audioCtx.destination);
     if (nextStartTime == 0) {
-        // este es el primer packete
+        // este es el primer paquete
         // me guardo el primer buffer y ajusto los contadores
         schedule_time = audioBuffer.length / audioBuffer.sampleRate;              
         nextStartTime = audioCtx.currentTime + schedule_time;
@@ -111,7 +112,7 @@ function createSoundSource(audioData) {
     //source.start(0);
 }
       
-socket.on('audio', function(msg) {
+socket.on('audio_rx', function(msg) {
     var chunks = [];
     chunks = msg.data;
     //console.log('msg length: ' + chunks.length);
