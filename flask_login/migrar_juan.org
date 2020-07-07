@@ -1,19 +1,28 @@
 * Como migro lo que pasa Juan
 
 ** primero copio toda la estructura de archivos a flask_login
-   - como usa otros nombres, no piso nada
+   - como usa otros nombres, no piso nada 
 
    - cp -rf * flask_login
+
+*** parado en flask_login
    - cp -rf ../juan3/NEW/NEW/* .
 
-** muevo algunos archivos y carpeta
-   - mv registrado.html templates
-   - mv css static
-   - mv js static
-   - mv img static
+** muevo carpetas, limpio anteriores
+   - rm -rf static/css
+   - rm -rf static/js
+   - rm -rf static/img
+
+   - mv NEW/css static
+   - mv NEW/js static
+   - mv NEW/img static
+
+** muevo algunos archivos
+   - rm templates/registrado.html
+   - mv NEW/registrado.html templates
 
 
-** edito registrado
+** edito registrado.html
 *** para que vea el css, le agrego static
     <link rel="stylesheet" href="static/css/estilos.css">
     <link rel="stylesheet" href="static/css/styles.css">

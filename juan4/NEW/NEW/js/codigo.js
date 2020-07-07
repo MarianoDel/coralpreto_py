@@ -88,10 +88,9 @@ function BotonSeleccionado () {
 	span2.innerHTML = rx;
 	span3.innerHTML = channel;
 	boton_seleccionado = 0;
-
-    socket.emit( 'botones', {
-	data: channel
-    })
+    	// socket.emit( 'botones', {
+	// 	data: channel
+	// })
 }
 
 
@@ -146,7 +145,7 @@ function cambiaBoton (canal) {
 	_c('puto');
 	for (var i = 0; i < aFrecuencias.length; i++) {
 
-		if (btns[i].getAttribute('data-channel') == canal) {
+		if (btns[i].getAttribute('data-channel') == boton_seleccionado) {
 			_c(aFrecuencias[i].id);
 			_c(aFrecuencias[i].tx);
 			_c(aFrecuencias[i].rx);
@@ -155,7 +154,7 @@ function cambiaBoton (canal) {
 	}
 }
 
-// cambiaBoton(boton_seleccionado);
+cambiaBoton(boton_seleccionado);
 
 
 
@@ -209,53 +208,35 @@ insert(txt);
 var txt = d.querySelector('.apretando');
 
 function apreto() {
-    txt.innerHTML = 'En Transimision!!!';
-
-    socket.emit( 'ptt', {
-	data: 'ON'
-    })
-    
+	txt.innerHTML = 'Estas apretando putito???';
 	//txt.setAttribute('display','block');
-	// _c('apreto');
+	_c('apreto');
 }
 function suelto() {
-    txt.innerHTML = 'Soltaste......';
-
-    socket.emit( 'ptt', {
-	data: 'OFF'
-    })
-    
-	// _c('suelto');
+	txt.innerHTML = 'Soltaste......';
+	_c('suelto');
 }
 
 
-var socket = io.connect('http://' + document.domain + ':' + location.port);
+// var socket = io.connect('http://' + document.domain + ':' + location.port);
 
 
-socket.on( 'tabla', function(msg) {
-    //saca lo que esta en la tabla
-    var filas = d.querySelectorAll(".user");
-    for (i = 0; i < filas.length; i++) {
-    	filas[i].remove();
-    }
+// socket.on( 'tabla', function(msg) {
+//     //saca lo que esta en la tabla
+//     var filas = d.querySelectorAll(".user");
+//     for (i = 0; i < filas.length; i++) {
+//     	filas[i].remove();
+//     }
 	
-    // var json = [{"nombre": "MED3","comentario":"Apretaste el boton " + channel,"status":"1"}]	;
-    // var jsonString = JSON.stringify(json);
-    // txt = '';
-    // insert(jsonString);
+//     // var json = [{"nombre": "MED3","comentario":"Apretaste el boton " + channel,"status":"1"}]	;
+//     // var jsonString = JSON.stringify(json);
+//     // txt = '';
+//     // insert(jsonString);
     
-    insert(msg);
+//     insert(msg);
+//		cambiaBoton(canal);
+// })
 
-})
-
-
-socket.on( 'boton_canal', function(msg) {
-    msg_canal = msg.data;
-    console.log('msg_canal: ' + msg_canal);
-    cambiaBoton(msg_canal);
-
-})
-         
 /*
 
 

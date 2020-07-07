@@ -48,7 +48,7 @@ def LedBlueToggle():
 
         
 already_toggling = 0
-t = treading.Thread()
+t = threading.Thread()
 def LedBlueToggleContinous(action):
     global already_toggling
     global t
@@ -197,6 +197,57 @@ def Channel_to_Memory (channel_string):
         Bit0On();
         Bit1On();
         Bit2On();
+
+
+def Memory_to_Channel ():
+
+    # memory 0
+    if (GPIO.input(BIT0) == 0 and \
+        GPIO.input(BIT1) == 0 and \
+        GPIO.input(BIT2) == 0):
+        return '09'
+
+    # memory 1        
+    if (GPIO.input(BIT0) == 1 and \
+        GPIO.input(BIT1) == 0 and \
+        GPIO.input(BIT2) == 0):
+        return '12'
+
+    # memory 2
+    if (GPIO.input(BIT0) == 0 and \
+        GPIO.input(BIT1) == 1 and \
+        GPIO.input(BIT2) == 0):
+        return '14'
+
+    # memory 3
+    if (GPIO.input(BIT0) == 1 and \
+        GPIO.input(BIT1) == 1 and \
+        GPIO.input(BIT2) == 0):
+        return '71'
+
+    # memory 4
+    if (GPIO.input(BIT0) == 0 and \
+        GPIO.input(BIT1) == 0 and \
+        GPIO.input(BIT2) == 1):
+        return '72'
+
+    # memory 5
+    if (GPIO.input(BIT0) == 1 and \
+        GPIO.input(BIT1) == 0 and \
+        GPIO.input(BIT2) == 1):
+        return '74'
+
+    # memory 6
+    if (GPIO.input(BIT0) == 0 and \
+        GPIO.input(BIT1) == 1 and \
+        GPIO.input(BIT2) == 1):
+        return '77'
+
+    # memory 7
+    if (GPIO.input(BIT0) == 1 and \
+        GPIO.input(BIT1) == 1 and \
+        GPIO.input(BIT2) == 1):
+        return '81'
 
 
 

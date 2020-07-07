@@ -90,8 +90,13 @@ def test_connect():
     print (json_data)
     socketio.emit('tabla', json_data)
 
+    channel = '09'
     if RUNNING_ON_RASP:
         LedBlueToggleContinous('start')
+        channel = Memory_to_Channel()
+
+    socketio.emit('boton_canal', {'data': channel})
+        
 
 
 
@@ -128,6 +133,22 @@ def handle_message(message):
             Channel_to_Memory(message['data'])
 
 
+        
+    
+@socketio.on('ptt')
+def transmit(message):
+    if message['data'] == 'ON':
+        if RUNNING_ON_RASP:
+            PttOn()
+
+        print("Cuidado PTT->ON")
+
+    else:
+        if RUNNING_ON_RASP:
+            PttOff()
+
+        print("PTT->OFF")
+        
         
     
 
