@@ -1,9 +1,12 @@
+import eventlet
+eventlet.monkey_patch()
 from flask import Flask
 from flask import Flask, flash, redirect, render_template, request, session, abort, Response, url_for
 from flask_socketio import SocketIO
 import json
 import pyaudio
 import os
+from blinker import Namespace
 
 import threading
 import numpy as np
@@ -17,15 +20,8 @@ app = Flask(__name__)
 app.secret_key = os.urandom(12)
 socketio = SocketIO(app)
 
-FORMAT = pyaudio.paInt16
-CHANNELS = 1
-RATE = 44100
-CHUNK = 1024
-BITSPERSAMPLE = 16
-
-# RECORD_SECONDS = 5
-
-audio_dev = pyaudio.PyAudio()
+my_signal = Namespace()
+audio_signal = my_signal.signal('audio signal')
 
 ## init of gpios and steady state
 if RUNNING_ON_RASP:
@@ -35,24 +31,6 @@ if RUNNING_ON_RASP:
     LedBlueOff()
     OnOff_On()
     Channel_to_Memory('12')
-
-
-def genHeader(sampleRate, bitsPerSample, channels):
-    datasize = 2000*10**6
-    o = bytes("RIFF",'ascii')                                               # (4byte) Marks file as RIFF
-    o += (datasize + 36).to_bytes(4,'little')                               # (4byte) File size in bytes excluding this and RIFF marker
-    o += bytes("WAVE",'ascii')                                              # (4byte) File type
-    o += bytes("fmt ",'ascii')                                              # (4byte) Format Chunk Marker
-    o += (16).to_bytes(4,'little')                                          # (4byte) Length of above format data
-    o += (1).to_bytes(2,'little')                                           # (2byte) Format type (1 - PCM)
-    o += (channels).to_bytes(2,'little')                                    # (2byte)
-    o += (sampleRate).to_bytes(4,'little')                                  # (4byte)
-    o += (sampleRate * channels * bitsPerSample // 8).to_bytes(4,'little')  # (4byte)
-    o += (channels * bitsPerSample // 8).to_bytes(2,'little')               # (2byte)
-    o += (bitsPerSample).to_bytes(2,'little')                               # (2byte)
-    o += bytes("data",'ascii')                                              # (4byte) Data Chunk Marker
-    o += (datasize).to_bytes(4,'little')                                    # (4byte) Data size in bytes
-    return o
 
 
 @app.route('/')
@@ -101,15 +79,12 @@ def test_connect():
     socketio.emit('boton_canal', {'data': channel})
         
 
-
-
 @socketio.on('disconnect')
 def test_disconnect():
     print('Client disconnected')
-
+    # audio_stop_stream()    #no encuentra el thread
     if RUNNING_ON_RASP:
         LedBlueToggleContinous('stop')
-
 
 
 @socketio.on('botones')
@@ -151,64 +126,169 @@ def transmit(message):
         print("PTT->OFF")
 
 
+audio_data_rx = 0
+def send_custom(message):
+    print("custom msg" + str(message))
+    socketio.emit('audio_start', 'in signal')
+
+audio_signal.connect(send_custom)
+
 ################################
 # Rutinas de Audio lado Server #
 ################################
-freq = 440
-samplerate = 44100
-timeloop = 1
-amplitude = 1.0
-frames_qtty = int(samplerate * timeloop)
-# generate audio data
-data = np.zeros(frames_qtty, dtype=np.float32)
-for i in range(frames_qtty):
-    data[i] = np.sin(np.pi * 2 * freq * i / samplerate) * amplitude
+SOUND_HARCODED = 0
+SOUND_MIC_INPUT = 1
 
-data_bytes = data.tobytes()
+if SOUND_HARCODED:    
+    freq = 440
+    samplerate = 44100
+    timeloop = 0.5
+    amplitude = 1.0
+    frames_qtty = int(samplerate * timeloop)
+    # generate audio data
+    data = np.zeros(frames_qtty, dtype=np.float32)
+    for i in range(frames_qtty):
+        data[i] = np.sin(np.pi * 2 * freq * i / samplerate) * amplitude
+
+    data_bytes = data.tobytes()
+
+    harcoded_audio_thread = threading.Thread()
+    pckt_cnt = 0
+    
+
+if SOUND_MIC_INPUT:
+    FORMAT = pyaudio.paInt16
+    # FORMAT = pyaudio.paFloat32
+    # FORMAT = pyaudio.paInt32
+    CHANNELS = 1
+    RATE = 44100
+    TIME_CHUNK = 0.5
+    # TIME_CHUNK = 1    
+    CHUNK = int(RATE * TIME_CHUNK)
+
+    audio_dev = pyaudio.PyAudio()
+    audio_stream = audio_dev
+
 
 playing = False
-yourThread = threading.Thread()
-pckt_cnt = 0
 
 
 @socketio.on('audio')
 def play_or_pause(message):
     global playing
+    global audio_stream
     
     if message['data'] == 'PLAY':
         print("empezar audio por sockets")
+        socketio.emit('audio_start', 'before callback')
         if playing != True:
             playing = True
             print("recording...")
-            audio_generation_start()
-        
+
+            #######################
+            # Envia harcoded sine #
+            #######################
+            if SOUND_HARCODED:
+                audio_generation_start()
+
+            ##############################################
+            # Envia lo conseguido en el MIC por callback #
+            ##############################################
+            if SOUND_MIC_INPUT:
+                # audio_stream = audio_dev.open(format=FORMAT,
+                #                               channels=CHANNELS,
+                #                               rate=RATE,
+                #                               frames_per_buffer=CHUNK,
+                #                               output=True,
+                #                               input=True,
+                #                               stream_callback=audio_mic_input_callback)
+
+                audio_stream = audio_dev.open(format=FORMAT,
+                                              channels=CHANNELS,
+                                              rate=RATE,
+                                              frames_per_buffer=CHUNK,
+                                              input=True,
+                                              stream_callback=audio_mic_input_callback)
+                
+                audio_stream.start_stream()
+
     elif message['data'] == 'STOP':
+        #######################################
+        # Solo si es por MIC reviso el stream #
+        #######################################
+        if SOUND_MIC_INPUT:
+            audio_stop_stream()
+
         print("terminar audio")
         playing = False
 
 
+def audio_stop_stream ():
+    global audio_stream
+    
+    if audio_stream.is_active():
+        audio_stream.stop_stream()
+        audio_stream.close()
+
+
+def audio_mic_input_callback(in_data, frame_count, time_info, status):
+    global audio_data_rx
+    # if FORMAT == pyaudio.paInt16:
+    #     socketio.emit('audio_start', 'after callbak')
+    #     # socketio.emit('audio_int16', {'data': in_data})
+    # elif FORMAT == pyaudio.paInt32:
+    #     socketio.emit('audio_int32', {'data': in_data})
+    # else:
+    #     socketio.emit('audio_f32', {'data': in_data})
+
+    # para pruebas de callbak
+    # socketio.emit('audio_int16', {'data': in_data})
+    socketio.emit('audio_start', 'after callbak')
+    print('.')
+    audio_signal.send()
+
+    # fin para pruebas callbak
+    
+    if status != 0:
+        if status == pyaudio.paInputUnderflow:
+            print("Buffer underflow in input")
+        elif status == pyaudio.paInputOverflow:
+            print("Buffer overflow in input")
+        elif status == pyaudio.paOutputUnderflow:
+            print("Buffer underflow in output")
+        elif status == pyaudio.paOutputOverflow:
+            print("Buffer overflow in output")
+        elif status == pyaudio.paPrimingOutput:
+            print("Just priming, not playing yet")
+
+    audio_data_rx = in_data
+    data_to_play = in_data    #sale lo mismo que entro en el mic
+    return (data_to_play, pyaudio.paContinue)
+
+
 def audio_generation_start():
-    global yourThread
+    global harcoded_audio_thread
     global pckt_cnt    
     # Create your thread
-    yourThread = threading.Timer(0.05, audio_generation_callback, ())
-    yourThread.start()
+    harcoded_audio_thread = threading.Timer(0.05, audio_generation_callback, ())
+    harcoded_audio_thread.start()
     pckt_cnt = 0
 
 
 def audio_generation_callback():
     global playing
-    global yourThread
+    global harcoded_audio_thread
     global pckt_cnt
     global data_bytes
     global timeloop
     
     if playing == True:
         # print (data)
-        socketio.emit('audio_rx', {'data': data_bytes})
+        # socketio.emit('audio_rx', {'data': data_bytes})
+        socketio.emit('audio_f32', {'data': data_bytes})
         # call next loop
-        yourThread = threading.Timer(timeloop, audio_generation_callback, ())
-        yourThread.start()
+        harcoded_audio_thread = threading.Timer(timeloop, audio_generation_callback, ())
+        harcoded_audio_thread.start()
         pckt_cnt = pckt_cnt + 1
         print('gen: ' + str(pckt_cnt))
 

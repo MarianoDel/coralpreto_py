@@ -75,6 +75,7 @@ span1.innerHTML = '- ';
 span2.innerHTML = '- ';
 span3.innerHTML = '- ';
 
+var boton_seleccionado = 0;
 function BotonSeleccionado () {
 	var tx = this.getAttribute('data-tx');
 	var rx = this.getAttribute('data-rx');
@@ -192,6 +193,7 @@ function suelto() {
 var socket = io.connect('http://' + document.domain + ':' + location.port);
 
 socket.on('tabla', function(msg) {
+    // console.log(msg);
 	var filas = d.querySelectorAll(".user");
 	for (i = 0; i < filas.length; i++) {
 		filas[i].remove();
@@ -200,6 +202,7 @@ socket.on('tabla', function(msg) {
 })
 
 socket.on('boton_canal', function(msg) {
+    // console.log(msg);
 	msg_canal = msg.data;
 	console.log('msg_canal: ' + msg_canal);
 	cambiaBoton(msg_canal);
@@ -212,54 +215,70 @@ function play() {
         socket.emit( 'audio', {
 	    data: 'PLAY'
         })
+        // console.log('Play ON')
+        // audioCtx.resume();
     }
     else {        
         play_pause = 0;
         socket.emit( 'audio', {
 	    data: 'STOP'
         })
+        flush_counters();
+        // console.log('Play OFF')
+        // audioCtx.suspend();
     }        
 }
 
 var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 var nextStartTime = 0;
-var next_schedule = 0;
+var buffer_time = 0;
+var buffer_underrun = 0;
 
-socket.on('audio_rx', function(msg) {
+function flush_counters () {
+    nextStartTime = 0;
+}
+
+
+socket.on('audio_start', function(msg) {
+    console.log(msg);
+})
+
+socket.on('audio_int16', function(msg) {
+    console.log('audio 16');
     var chunks = [];
     chunks = msg.data;
-    console.log('msg length: ' + chunks.length);
-    createSoundSource(chunks);
+    createSoundSource_int16(chunks);
+    console.log('audio 16');
 })
 
 
-function createSoundSource(audioData) {
-    //var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+socket.on('audio_int32', function(msg) {
+    var chunks = [];
+    chunks = msg.data;
+    createSoundSource_int32(chunks);
+})
 
-    //copy - paste
-    //var view = new Int16Array(event.data);
-    //var viewf = new Float32Array(view.length);
-    //
-    //audioBuffer = audioCtx.createBuffer(1, viewf.length, 22050);
-    //audioBuffer.getChannelData(0).set(viewf);
-    //source = audioCtx.createBufferSource();
-    //source.buffer = audioBuffer;
-    //source.connect(audioCtx.destination);
-    //source.start(0);
 
-    audioCtx.resume();
-    var audiobuf = new Float32Array(audioData);
-    //console.log('audiobuf[0]: '+ audiobuf[0]);
+socket.on('audio_f32', function(msg) {
+    var chunks = [];
+    chunks = msg.data;
+    createSoundSource_f32(chunks);
+})
+
+
+function createSoundSource_int16 (audioData) {
+    // audioCtx.resume();    //soluciona error con chrome
+    var audiobuf = new Int16Array(audioData);
+    // console.log('audiobuf lenght: '+ audiobuf.length);
 
     // creo el buffer de audio, pido referencia y le copio las muestras
     audioBuffer = audioCtx.createBuffer(1, audiobuf.length, 44100);
     var samples_ref = audioBuffer.getChannelData(0);
-    samples_ref.set(audiobuf);
+    // samples_ref.set(audiobuf);
 
-    //for (var i = 0; i < audiobuf.length; i++) {
-    //                    samples_ref[i] = audiobuf[i] / 32768;
-    //                    //samples_ref[i] = audiobuf[i];                          
-    //                    }      
+    for (var i = 0; i < audiobuf.length; i++) {
+        samples_ref[i] = audiobuf[i] / 32768;
+    }      
 
     //audioBuffer.getChannelData(0).set(audiobuf_f);
 
@@ -285,27 +304,106 @@ function createSoundSource(audioData) {
     if (nextStartTime == 0) {
         // este es el primer paquete
         // me guardo el primer buffer y ajusto los contadores
-        schedule_time = audioBuffer.length / audioBuffer.sampleRate;              
-        nextStartTime = audioCtx.currentTime + schedule_time;
-        next_schedule = nextStartTime;
-        console.log('start schedule: '+ schedule_time);        
+        buffer_time = audioBuffer.length / audioBuffer.sampleRate;              
+        nextStartTime = audioCtx.currentTime + buffer_time;
+        console.log('int16 chunk time: '+ buffer_time + ' next start: ' + nextStartTime);        
     } else {
-        if (next_schedule < audioCtx.currentTime) {
+        // los paquetes que siguen
+        if (buffer_underrun < audioCtx.currentTime) {
             //se agoto el primer buffer dejo pasar un schedule
-            nextStartTime = next_schedule + schedule_time;
-            console.log('next: '+next_schedule + 'current: '+ audioCtx.currentTime);
+            nextStartTime = audioCtx.currentTime + buffer_time;
+            console.log('underrun: ' + buffer_underrun + ' current: ' + audioCtx.currentTime);
         }
         else {
             // todavia tengo algo de buffer calculo el tiempo de comienzo del proximo chunk
-            nextStartTime = audioCtx.currentTime - next_schedule;
-            if (nextStartTime < 0)
-                nextStartTime = 0;
-            console.log('.');            
+            nextStartTime = buffer_underrun;
         }
-        next_schedule += schedule_time;
     }
 
+    buffer_underrun = nextStartTime + buffer_time;
+    // console.log('under: ' + buffer_underrun)
     source.start(nextStartTime);
-    nextStartTime += audioBuffer.length / audioBuffer.sampleRate;
-    //source.start(0);
+
+}
+
+
+function createSoundSource_int32 (audioData) {
+    // audioCtx.resume();    //soluciona error con chrome
+    var audiobuf = new Int32Array(audioData);
+    //console.log('audiobuf[0]: '+ audiobuf[0]);
+
+    // creo el buffer de audio, pido referencia y le copio las muestras
+    audioBuffer = audioCtx.createBuffer(1, audiobuf.length, 44100);
+    var samples_ref = audioBuffer.getChannelData(0);
+    // samples_ref.set(audiobuf);
+
+    for (var i = 0; i < audiobuf.length; i++) {
+        samples_ref[i] = audiobuf[i] / 2147483648;
+    }      
+
+    var source = audioCtx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(audioCtx.destination);
+    if (nextStartTime == 0) {
+        // este es el primer paquete
+        // me guardo el primer buffer y ajusto los contadores
+        buffer_time = audioBuffer.length / audioBuffer.sampleRate;              
+        nextStartTime = audioCtx.currentTime + buffer_time;
+        console.log('int32 chunk time: '+ buffer_time + ' next start: ' + nextStartTime);        
+    } else {
+        // los paquetes que siguen
+        if (buffer_underrun < audioCtx.currentTime) {
+            //se agoto el primer buffer dejo pasar un schedule
+            nextStartTime = audioCtx.currentTime + buffer_time;
+            console.log('underrun: ' + buffer_underrun + ' current: ' + audioCtx.currentTime);
+        }
+        else {
+            // todavia tengo algo de buffer calculo el tiempo de comienzo del proximo chunk
+            nextStartTime = buffer_underrun;
+        }
+    }
+
+    buffer_underrun = nextStartTime + buffer_time;
+    // console.log('under: ' + buffer_underrun)
+    source.start(nextStartTime);
+
+}
+
+
+function createSoundSource_f32 (audioData) {
+    // audioCtx.resume();    //soluciona error con chrome
+    var audiobuf = new Float32Array(audioData);
+    //console.log('audiobuf[0]: '+ audiobuf[0]);
+
+    // creo el buffer de audio, pido referencia y le copio las muestras
+    audioBuffer = audioCtx.createBuffer(1, audiobuf.length, 44100);
+    var samples_ref = audioBuffer.getChannelData(0);
+    samples_ref.set(audiobuf);
+      
+    var source = audioCtx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(audioCtx.destination);
+    if (nextStartTime == 0) {
+        // este es el primer paquete
+        // me guardo el primer buffer y ajusto los contadores
+        buffer_time = audioBuffer.length / audioBuffer.sampleRate;              
+        nextStartTime = audioCtx.currentTime + buffer_time;
+        console.log('f32 chunk time: '+ buffer_time + ' next start: ' + nextStartTime);        
+    } else {
+        // los paquetes que siguen
+        if (buffer_underrun < audioCtx.currentTime) {
+            //se agoto el primer buffer dejo pasar un schedule
+            nextStartTime = audioCtx.currentTime + buffer_time;
+            console.log('underrun: ' + buffer_underrun + ' current: ' + audioCtx.currentTime);
+        }
+        else {
+            // todavia tengo algo de buffer calculo el tiempo de comienzo del proximo chunk
+            nextStartTime = buffer_underrun;
+        }
+    }
+
+    buffer_underrun = nextStartTime + buffer_time;
+    // console.log('under: ' + buffer_underrun)
+    source.start(nextStartTime);
+
 }
