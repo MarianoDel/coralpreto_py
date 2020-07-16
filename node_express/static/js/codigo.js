@@ -82,10 +82,17 @@ function BotonSeleccionado () {
 	var channel = this.getAttribute('data-channel');
 	span1.innerHTML = tx;
 	span2.innerHTML = rx;
-	span3.innerHTML = channel;
-	socket.emit( 'botones', {
-		data: channel
-	})
+    span3.innerHTML = channel;
+    //socket.io
+	// socket.emit( 'botones', {
+	// 	data: channel
+    // })
+    // ws
+    // socket.send( "{\"botones\" : \"data\"}" );
+    // var json_msg = [{"botones" : channel}];
+    var json_msg = JSON.stringify({"botones" : channel});
+    // console.log(json_msg);
+    socket.send(json_msg);
 }
 
 var btns = d.getElementsByClassName("botones");
@@ -178,35 +185,85 @@ var txt = d.querySelector('.apretando');
 
 function apreto() {
 	txt.innerHTML = 'En Transimision!!!';
-	socket.emit( 'ptt', {
-		data: 'ON'
-	})
+	// socket.emit( 'ptt', {
+	// 	data: 'ON'
+	// })
+    var json_msg = JSON.stringify({"ptt" : "ON"});
+    socket.send(json_msg);
 }
 
 function suelto() {
 	txt.innerHTML = 'Soltaste......';
-	socket.emit( 'ptt', {
-		data: 'OFF'
-	})
+	// socket.emit( 'ptt', {
+	// 	data: 'OFF'
+	// })
+    var json_msg = JSON.stringify({"ptt" : "OFF"});
+    socket.send(json_msg);    
 }
 
-var socket = io.connect('http://' + document.domain + ':' + location.port);
 
-socket.on('tabla', function(msg) {
-    // console.log(msg);
-	var filas = d.querySelectorAll(".user");
-	for (i = 0; i < filas.length; i++) {
-		filas[i].remove();
-	}
-	insert(msg);
-})
+// Con websocket
+const socket = new WebSocket('ws://' + document.domain + ':' + location.port);
 
-socket.on('boton_canal', function(msg) {
-    // console.log(msg);
-	msg_canal = msg.data;
-	console.log('msg_canal: ' + msg_canal);
-	cambiaBoton(msg_canal);
-})
+socket.onopen = () => {
+    socket.send('Here\'s some text that the server is urgently awaiting!'); 
+}
+
+socket.onmessage = e => {
+    console.log(typeof(event.data));
+    console.log(socket.binaryType);
+    if ((e.data instanceof ArrayBuffer) || (e.data instanceof Blob))
+    {
+        //TODO: corregir esto separando Blob de arrayBuffer
+        var size = e.data.size;
+        console.log('blob size: ' + size);
+        // var local = new Blob(e.data);
+        // console.log("blob binario length: " + local.length);
+    }
+    else if (typeof e.data === "string")
+    {
+        console.log('Message from server:' + e.data);
+        try {
+            var json_msg = JSON.parse(event.data);
+            if (json_msg.tabla != undefined)
+            {
+                var a_tabla = '[{' +
+                    '\"nombre\": ' + '\"' + json_msg.nombre + '\",' +
+                    '\"comentario\": ' + '\"' + json_msg.comentario + '\",' +
+                    '\"status\": ' + '\"' + json_msg.status + '\"}]';
+                console.log(a_tabla);
+                insert(a_tabla);
+            }
+            else if (json_msg.boton_canal != undefined)
+            {
+                console.log("boton canal: " + json_msg.boton_canal);
+                cambiaBoton(json_msg.boton_canal);
+            }
+        }
+        catch {
+        }
+    }
+}
+
+// Con socket.io
+// var socket = io.connect('http://' + document.domain + ':' + location.port);
+// console.log('http://' + document.domain + ':' + location.port);
+
+// socket.on('tabla', function(msg) {
+//     // console.log(msg);
+// 	var filas = d.querySelectorAll(".user");
+// 	for (i = 0; i < filas.length; i++) {
+// 		filas[i].remove();
+// 	}
+// 	insert(msg);
+// })
+
+// socket.on('boton_canal', function(msg) {
+//     // console.log(msg);
+// 	msg_canal = msg.data;
+// 	console.log('msg_canal: ' + msg_canal);
+// 	cambiaBoton(msg_canal);
+// })
 
 var play_pause = 0;
 function play() {
@@ -229,41 +286,41 @@ function play() {
     }        
 }
 
-var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-var nextStartTime = 0;
-var buffer_time = 0;
-var buffer_underrun = 0;
+// var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+// var nextStartTime = 0;
+// var buffer_time = 0;
+// var buffer_underrun = 0;
 
-function flush_counters () {
-    nextStartTime = 0;
-}
-
-
-socket.on('audio_start', function(msg) {
-    console.log(msg);
-})
-
-socket.on('audio_int16', function(msg) {
-    console.log('audio 16');
-    var chunks = [];
-    chunks = msg.data;
-    createSoundSource_int16(chunks);
-    console.log('audio 16');
-})
+// function flush_counters () {
+//     nextStartTime = 0;
+// }
 
 
-socket.on('audio_int32', function(msg) {
-    var chunks = [];
-    chunks = msg.data;
-    createSoundSource_int32(chunks);
-})
+// socket.on('audio_start', function(msg) {
+//     console.log(msg);
+// })
+
+// socket.on('audio_int16', function(msg) {
+//     console.log('audio 16');
+//     var chunks = [];
+//     chunks = msg.data;
+//     createSoundSource_int16(chunks);
+//     console.log('audio 16');
+// })
 
 
-socket.on('audio_f32', function(msg) {
-    var chunks = [];
-    chunks = msg.data;
-    createSoundSource_f32(chunks);
-})
+// socket.on('audio_int32', function(msg) {
+//     var chunks = [];
+//     chunks = msg.data;
+//     createSoundSource_int32(chunks);
+// })
+
+
+// socket.on('audio_f32', function(msg) {
+//     var chunks = [];
+//     chunks = msg.data;
+//     createSoundSource_f32(chunks);
+// })
 
 
 function createSoundSource_int16 (audioData) {

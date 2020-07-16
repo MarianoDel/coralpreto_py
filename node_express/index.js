@@ -1,5 +1,7 @@
 const express = require('express');
+const ws = require('ws');
 const members = require('./members');
+const gpios = require('./gpios');
 var bodyParser = require('body-parser');
 var path = require('path');
 
@@ -57,4 +59,116 @@ app.get('/registrado', (req, res) => {
 app.use(express.static('./static'));
 
 
-app.listen(port, () => console.log(`Example app listening at http://localhost:${port}`));
+// Websockets Server ----------------------------------------------------------
+// Set up a headless websocket server that prints any events that come in.
+const wsServer = new ws.Server({ noServer: true });
+wsServer.on('connection', (socket) => {
+    //keep alive msg
+    socket.isAlive = true;
+    socket.on('pong', heartbeat);
+    gpios.LedBlueBlinking_On();
+    
+    //Rx messages
+    socket.on('message', function (message) {
+        // console.log(message + ' from: ' + client);
+        console.log(message);        
+        try {
+            var json_msg = JSON.parse(message);
+
+            if (json_msg.botones != undefined)
+            {
+                console.log('botones: ' + json_msg.botones);
+                gpios.ChannelToGpios(json_msg.botones);
+
+                //Tx messages
+                var json_res = {
+                    "tabla" : "undef",
+                    "nombre": "MED",
+                    "comentario":"changed to channel " + json_msg.botones,
+                    "status":"1" };
+                
+                // json_msg = "server msg";
+                socket.send(JSON.stringify(json_res));
+                // socket.send(json_msg);
+                //prueba envio binario
+                // var bin = new Float32Array(5);
+                // bin[0] = 55.5;
+                // bin[1] = 55.5;
+                // bin[2] = 55.5;
+                // bin[3] = 55.5;
+                // bin[4] = 55.5;
+                // socket.send(bin);
+            }
+            else if (json_msg.ptt != undefined)
+            {
+                console.log('ptt: ' + json_msg.ptt);
+                if (json_msg.ptt == 'ON')
+                    gpios.Ptt_On();
+                else
+                    gpios.Ptt_Off();
+            }
+            else if (json_msg.audio != undefined)
+            {
+                console.log('audio: ' + json_msg.audio);
+            }
+            
+        } catch (error) {
+            // console.error(error);
+        }
+        
+        // var obj = JSON.parse(message);
+        // var msg = obj.botones;
+        
+    });
+
+    socket.on('close', () => {
+        console.log('disconnect client close');
+        // clearInterval(interval);
+        gpios.LedBlueBlinking_Off();
+    });
+    
+});
+
+// Initialize Gpios module -----------------------------------------------------
+gpios.GpiosInit();
+gpios.LedBlueOff();
+gpios.OnOff_Off();
+gpios.Ptt_Off();
+gpios.Bit0_Off();
+gpios.Bit1_Off();
+gpios.Bit2_Off();    
+
+
+// `server` is a vanilla Node.js HTTP server, so use
+// the same ws upgrade process described here:
+// https://www.npmjs.com/package/ws#multiple-servers-sharing-a-single-https-server
+const server = app.listen(port, () => console.log(`Example app listening at http://localhost:${port}`));
+// app.listen(port, () => console.log(`Example app listening at http://localhost:${port}`));
+
+server.on('upgrade', (request, socket, head) => {
+    wsServer.handleUpgrade(request, socket, head, socket => {
+        wsServer.emit('connection', socket, request);
+    });
+});
+
+function noop() {}
+
+function heartbeat() {
+    this.isAlive = true;
+    console.log('keepalive');
+}
+
+const interval = setInterval(function ping() {
+    console.log('interval');
+    wsServer.clients.forEach(function each(socket) {
+        if (socket.isAlive === false)
+        {
+            console.log('no comms disconnect');
+            return socket.terminate();
+        }
+
+        socket.isAlive = false;
+        socket.ping(noop);
+    });
+}, 10000);
+

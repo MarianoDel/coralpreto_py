@@ -4,3 +4,4 @@
 *.wav
 *.zip
 *.pdf
+node_express/node_modules
