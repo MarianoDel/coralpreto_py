@@ -4,6 +4,8 @@ const members = require('./members');
 const gpios = require('./gpios');
 var bodyParser = require('body-parser');
 var path = require('path');
+const portAudio = require('naudiodon');
+const fs = require('fs');
 
 const app = express();
 const port = 3000;
@@ -151,6 +153,45 @@ server.on('upgrade', (request, socket, head) => {
     });
 });
 
+
+// Audio with naudiodon (using Streams ) ---------------------------------------
+// Create an instance of AudioIO with outOptions (defaults are as below), which will return a WritableStream
+var ao = new portAudio.AudioIO({
+  outOptions: {
+    channelCount: 2,
+    sampleFormat: portAudio.SampleFormat16Bit,
+    sampleRate: 44100,
+    deviceId: -1, // Use -1 or omit the deviceId to select the default device
+    closeOnError: true // Close the stream if an audio error is detected, if set false then just log the error
+  }
+});
+
+var rs = fs.createReadStream('../hernandez.wav');
+
+// Start piping data and start streaming
+rs.pipe(ao);
+ao.start();
+
+// Create an instance of AudioIO with inOptions and outOptions, which will return a DuplexStream
+// var ai = new portAudio.AudioIO({
+//   inOptions: {
+//     channelCount: 1,
+//     sampleFormat: portAudio.SampleFormat16Bit,
+//     sampleRate: 44100,
+//     deviceId: -1 // Use -1 or omit the deviceId to select the default device
+//   },
+//   outOptions: {
+//     channelCount: 2,
+//     sampleFormat: portAudio.SampleFormat16Bit,
+//     sampleRate: 44100,
+//     deviceId: -1 // Use -1 or omit the deviceId to select the default device
+//   }
+// });
+
+// aio.start();
+
+
+// Check for ws connections still alive ----------------------------------------
 function noop() {}
 
 function heartbeat() {
