@@ -209,16 +209,26 @@ socket.onopen = () => {
     socket.send('Here\'s some text that the server is urgently awaiting!'); 
 }
 
+const fr = new FileReader();
+fr.onload = () => {
+    // It worked
+    const array = new Int16Array(fr.result);
+    createSoundSource_int16(array);
+};
+
+fr.onerror = () => {
+    // The read failed, handle/report it
+    console.log('blob packet error');
+};
+
 socket.onmessage = e => {
-    console.log(typeof(event.data));
-    console.log(socket.binaryType);
+    // console.log(' typeof ws data: ' + typeof(event.data) + ' binaryType: ' + socket.binaryType);
     if ((e.data instanceof ArrayBuffer) || (e.data instanceof Blob))
     {
-        //TODO: corregir esto separando Blob de arrayBuffer
         var size = e.data.size;
         console.log('blob size: ' + size);
-        // var local = new Blob(e.data);
-        // console.log("blob binario length: " + local.length);
+        if ((fr.readyState == 0) || (fr.readyState == 2))
+            fr.readAsArrayBuffer(e.data);
     }
     else if (typeof e.data === "string")
     {
@@ -269,31 +279,40 @@ var play_pause = 0;
 function play() {
     if (play_pause == 0) {
         play_pause = 1;
-        socket.emit( 'audio', {
-	    data: 'PLAY'
-        })
+
+        var json_msg = JSON.stringify({"audio" : "PLAY"});
+        // console.log(json_msg);
+        socket.send(json_msg);
+
+        // socket.emit( 'audio', {
+	//     data: 'PLAY'
+        // })
         // console.log('Play ON')
         // audioCtx.resume();
     }
     else {        
         play_pause = 0;
-        socket.emit( 'audio', {
-	    data: 'STOP'
-        })
+        var json_msg = JSON.stringify({"audio" : "STOP"});
+        // console.log(json_msg);
+        socket.send(json_msg);
+        
+        // socket.emit( 'audio', {
+	//     data: 'STOP'
+        // })
         flush_counters();
         // console.log('Play OFF')
         // audioCtx.suspend();
     }        
 }
 
-// var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-// var nextStartTime = 0;
-// var buffer_time = 0;
-// var buffer_underrun = 0;
+var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+var nextStartTime = 0;
+var buffer_time = 0;
+var buffer_underrun = 0;
 
-// function flush_counters () {
-//     nextStartTime = 0;
-// }
+function flush_counters () {
+    nextStartTime = 0;
+}
 
 
 // socket.on('audio_start', function(msg) {
@@ -323,9 +342,10 @@ function play() {
 // })
 
 
-function createSoundSource_int16 (audioData) {
+function createSoundSource_int16 (audio_int16array) {
     // audioCtx.resume();    //soluciona error con chrome
-    var audiobuf = new Int16Array(audioData);
+    // var audiobuf = new Int16Array(audioData);
+    var audiobuf = audio_int16array;
     // console.log('audiobuf lenght: '+ audiobuf.length);
 
     // creo el buffer de audio, pido referencia y le copio las muestras

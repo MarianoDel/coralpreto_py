@@ -112,6 +112,10 @@ wsServer.on('connection', (socket) => {
             else if (json_msg.audio != undefined)
             {
                 console.log('audio: ' + json_msg.audio);
+                if (json_msg.audio == 'PLAY')
+                    start_sending_audio();
+                else
+                    stop_sending_audio();
             }
             
         } catch (error) {
@@ -153,24 +157,128 @@ server.on('upgrade', (request, socket, head) => {
     });
 });
 
+// Timed harcoded signal data by websockets ------------------------------------
+var buffer_new = create_buffer_int16(44100, 400, 44100);
+var chunk_time_ms = 1000;
+var pck_cnt = 0;
+
+var timed_pck;
+
+function start_sending_audio () {
+    // Harcoded Audio by timeout
+    // timed_pck = setInterval(() => {
+    //     wsServer.clients.forEach(function each(client) {
+    //         if (client.readyState === ws.OPEN) {
+    //             client.send(buffer_new);
+    //             console.log('pkt: ' + pck_cnt + ' server: ' + client.url + ' binary: ' + client.binaryType);
+    //         }
+    //     });
+    //     pck_cnt++;
+        
+    // }, (chunk_time_ms - 20));
+    // End of Harcoded Audio by timeout
+    if (ai.isPaused())
+        ai.resume();
+    else
+        ai.start();
+}
+
+function stop_sending_audio () {
+    // Harcoded Audio by timeout
+    // console.log('clearing timed interval');
+    // if (timed_pck.hasRef())
+    //     clearInterval(timed_pck);
+    // End of Harcoded Audio by timeout
+    try {
+        // ai.quit();
+        ai.pause();        
+    }
+    catch {
+    }
+}
+
+// Timed harcoded signal data --------------------------------------------------
+// var buffer = new Int16Array(size);
+// // var buffer = new Buffer(size);
+// const freq = 400;
+// const amplitude = 32767;
+
+function create_buffer_int16 (samples, frequency, sampleRate) {
+    const amplitude = 32767;
+    var buf = new Int16Array(samples);
+    for (var i = 0; i < buf.length; i++) {
+        buf[i] = amplitude * Math.sin(6.28 * frequency * i / sampleRate);
+    }
+
+    console.log('check for chunks cuts [0]: ' + buf[0] +
+                ' [1]: ' + buf[1] +
+                ' [' + (buf.length - 2) + ']: ' + buf[(buf.length - 2)] +
+                ' [' + (buf.length - 1) + ']: ' + buf[(buf.length - 1)]);
+    
+    return Buffer.from(buf.buffer);
+}
+
+// console.log('buffer length: ' + buffer.length);
+// for (var i = 0; i < buffer.length; i++) {
+//     buffer[i] = amplitude * Math.sin(6.28 * freq * i / sampleRate);
+//     // buffer[i] = (Math.sin((i / sampleRate) * 6.28 * freq) * 127) + 127;
+
+// }
+
+// console.log('check for chunks cuts [0]: ' + buffer[0] +
+//             ' [1]: ' + buffer[1] +
+//             ' [' + (buffer.length - 2) + ']: ' + buffer[(buffer.length - 2)] +
+//             ' [' + (buffer.length - 1) + ']: ' + buffer[(buffer.length - 1)]);
+// var buffer_new = Buffer.from(buffer.buffer);
+// var buffer_new = create_buffer_int16(44100, 400, 44100);
+// var chunk_time_ms = 1000;
+// var pck_cnt = 0;
+// let timerId = setInterval(() => {
+//     ao.write(buffer_new);
+//     console.log(`buffer_new length: ${buffer_new.length} pck_cnt: ${pck_cnt}`);
+//     pck_cnt++;
+    
+// }, (chunk_time_ms - 20));
+
+// Audio with naudiodon (using events) -----------------------------------------
+// Create an instance of AudioIO with inOptions (defaults are as below), which will return a ReadableStream
+var ai = new portAudio.AudioIO({
+    inOptions: {
+        channelCount: 1,
+        sampleFormat: portAudio.SampleFormat16Bit,
+        sampleRate: 44100,
+        deviceId: -1, // Use -1 or omit the deviceId to select the default device
+        closeOnError: false // Close the stream if an audio error is detected, if set false then just log the error        
+    }
+});
+
+ai.on('data', (buffer) => {
+    wsServer.clients.forEach(function each(client) {
+        if (client.readyState === ws.OPEN) {
+            client.send(buffer);
+            console.log('pkt: ' + pck_cnt + ' size: ' + buffer.length);
+        }
+    });
+    pck_cnt++;
+});
 
 // Audio with naudiodon (using Streams ) ---------------------------------------
 // Create an instance of AudioIO with outOptions (defaults are as below), which will return a WritableStream
-var ao = new portAudio.AudioIO({
-  outOptions: {
-    channelCount: 2,
-    sampleFormat: portAudio.SampleFormat16Bit,
-    sampleRate: 44100,
-    deviceId: -1, // Use -1 or omit the deviceId to select the default device
-    closeOnError: true // Close the stream if an audio error is detected, if set false then just log the error
-  }
-});
+// var ao = new portAudio.AudioIO({
+//   outOptions: {
+//     channelCount: 1,
+//     sampleFormat: portAudio.SampleFormat16Bit,
+//     sampleRate: 44100,
+//     deviceId: -1, // Use -1 or omit the deviceId to select the default device
+//     closeOnError: true // Close the stream if an audio error is detected, if set false then just log the error
+//   }
+// });
 
-var rs = fs.createReadStream('../hernandez.wav');
+// var rs = fs.createReadStream('../hernandez.wav');
 
-// Start piping data and start streaming
-rs.pipe(ao);
-ao.start();
+// // Start piping data and start streaming
+// rs.pipe(ao);
+// ao.start();
 
 // Create an instance of AudioIO with inOptions and outOptions, which will return a DuplexStream
 // var ai = new portAudio.AudioIO({

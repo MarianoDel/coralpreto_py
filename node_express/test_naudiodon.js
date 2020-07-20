@@ -53,7 +53,7 @@ var rs = fs.createReadStream('../ZAZ.wav');
 // repeat with the interval of 500 mseconds
 const chunk_time_ms = 1000;
 const sampleRate = 44100;
-const size = chunk_time_ms * sampleRate * 2/ 1000;
+const size = chunk_time_ms * sampleRate / 1000;
 var pck_cnt = 0;
 console.log('chunk size: ' + size);
 
@@ -77,6 +77,10 @@ for (var i = 0; i < buffer.length; i++) {
 
 }
 
+console.log('check for chunks cuts [0]: ' + buffer[0] +
+            ' [1]: ' + buffer[1] +
+            ' [' + (buffer.length - 2) + ']: ' + buffer[(buffer.length - 2)] +
+            ' [' + (buffer.length - 1) + ']: ' + buffer[(buffer.length - 1)]);
 var buffer_new = Buffer.from(buffer.buffer);
 
 let timerId = setInterval(() => {
@@ -84,7 +88,7 @@ let timerId = setInterval(() => {
     console.log(`buffer_new length: ${buffer_new.length} pck_cnt: ${pck_cnt}`);
     pck_cnt++;
     
-}, chunk_time_ms);
+}, (chunk_time_ms - 20));
 
 // flowing mode con data-event ----------
 // rs.on('data', (chunk) => {
