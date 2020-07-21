@@ -113,9 +113,15 @@ wsServer.on('connection', (socket) => {
             {
                 console.log('audio: ' + json_msg.audio);
                 if (json_msg.audio == 'PLAY')
+                {
                     start_sending_audio();
+                    // start_sending_harcoded_audio();
+                }
                 else
+                {
                     stop_sending_audio();
+                    // stop_sending_harcoded_audio();
+                }
             }
             
         } catch (error) {
@@ -144,6 +150,8 @@ gpios.Bit0_Off();
 gpios.Bit1_Off();
 gpios.Bit2_Off();    
 
+//prender radio
+gpios.OnOff_On();
 
 // `server` is a vanilla Node.js HTTP server, so use
 // the same ws upgrade process described here:
@@ -163,44 +171,72 @@ var chunk_time_ms = 1000;
 var pck_cnt = 0;
 
 var timed_pck;
-
-function start_sending_audio () {
+function start_sending_harcoded_audio () {
     // Harcoded Audio by timeout
-    // timed_pck = setInterval(() => {
-    //     wsServer.clients.forEach(function each(client) {
-    //         if (client.readyState === ws.OPEN) {
-    //             client.send(buffer_new);
-    //             console.log('pkt: ' + pck_cnt + ' server: ' + client.url + ' binary: ' + client.binaryType);
-    //         }
-    //     });
-    //     pck_cnt++;
+    timed_pck = setInterval(() => {
+        wsServer.clients.forEach(function each(client) {
+            if (client.readyState === ws.OPEN) {
+                client.send(buffer_new);
+                console.log('pkt: ' + pck_cnt + ' server: ' + client.url + ' binary: ' + client.binaryType);
+            }
+        });
+        pck_cnt++;
         
-    // }, (chunk_time_ms - 20));
+    }, (chunk_time_ms - 20));
     // End of Harcoded Audio by timeout
-    if (ai.isPaused())
-    {
-        while (null !== (chunk = ai.read(88200))) {
-            console.log(`flushing stream ${chunk.length} bytes of data.`);
-        }
-            
-        ai.resume();
-    }
-    else
-        ai.start();
+}
+
+
+function stop_sending_harcoded_audio () {
+    // Harcoded Audio by timeout
+    console.log('clearing timed interval');
+    if (timed_pck.hasRef())
+        clearInterval(timed_pck);
+    // End of Harcoded Audio by timeout
+}
+
+
+var single_client_play = false;
+function start_sending_audio () {
+    single_client_play = true;
+    
+    // if (ai.isPaused())
+    // {
+    //     if (ai.readableFlowing === null)
+    //         console.log('ai on null flowing - no mechanism for consuming the streams data is provided');
+    //     else if (ai.readableFlowing === false)
+    //         console.log('ai on pause - temporarily halting the flowing of events but not halting the generation of data');
+    //     else if (ai.readableFlowing === true)
+    //         console.log('ai on true flowing -  actively emitting events as data is generated');
+
+    //     while (null !== (chunk = ai.read())) {
+    //         console.log(`flushing stream ${chunk.length} bytes of data.`);
+    //     }
+    //     // do {
+    //     //     var chunk_flush = ai.read();
+    //     //     console.log(`flushing stream ${chunk_flush.length} bytes of data.`);
+    //     // } while (chunk_flush != null);
+
+    //     console.log('continue');
+    //     ai.addListener('data', onDataCallback);
+    //     ai.resume();
+    // }
+    // else
+    // {
+    //     ai.start();
+    // }
 }
 
 function stop_sending_audio () {
-    // Harcoded Audio by timeout
-    // console.log('clearing timed interval');
-    // if (timed_pck.hasRef())
-    //     clearInterval(timed_pck);
-    // End of Harcoded Audio by timeout
-    try {
-        // ai.quit();
-        ai.pause();        
-    }
-    catch {
-    }
+    single_client_play = false;
+    // try {
+    //     // ai.quit();
+    //     ai.pause();
+    //     ai.removeListener('data', onDataCallback);
+    //     // ai.removeAllListener();
+    // }
+    // catch {
+    // }
 }
 
 // Timed harcoded signal data --------------------------------------------------
@@ -248,6 +284,25 @@ function create_buffer_int16 (samples, frequency, sampleRate) {
 
 // Audio with naudiodon (using events) -----------------------------------------
 // Create an instance of AudioIO with inOptions (defaults are as below), which will return a ReadableStream
+// function create_ai_input (ai_input) {
+//     ai_input = new portAudio.AudioIO({
+//         inOptions: {
+//             channelCount: 1,
+//             sampleFormat: portAudio.SampleFormat16Bit,
+//             sampleRate: 44100,
+//             highwaterMark: 88200,    //un paquete completo antes de cortar
+//             deviceId: -1, // Use -1 or omit the deviceId to select the default device
+//             closeOnError: false // Close the stream if an audio error is detected, if set false then just log the error        
+//         }
+//     });
+
+//     return ai_input;
+// }
+
+// var ai_not_first_time = false;
+// var ai;
+// ai = create_ai_input(ai);
+
 var ai = new portAudio.AudioIO({
     inOptions: {
         channelCount: 1,
@@ -259,15 +314,24 @@ var ai = new portAudio.AudioIO({
     }
 });
 
-ai.on('data', (buffer) => {
+ai.on('data', onDataCallback);
+
+function onDataCallback (buffer) {
     wsServer.clients.forEach(function each(client) {
         if (client.readyState === ws.OPEN) {
-            client.send(buffer);
-            console.log('pkt: ' + pck_cnt + ' size: ' + buffer.length);
+            if (single_client_play)
+            {
+                client.send(buffer);
+                console.log('pkt: ' + pck_cnt + ' size: ' + buffer.length);
+            }
+            else
+                console.log('flushed portaudio size: ' + buffer.length);
         }
     });
     pck_cnt++;
-});
+};
+
+ai.start();
 
 // Audio with naudiodon (using Streams ) ---------------------------------------
 // Create an instance of AudioIO with outOptions (defaults are as below), which will return a WritableStream
