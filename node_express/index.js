@@ -178,7 +178,13 @@ function start_sending_audio () {
     // }, (chunk_time_ms - 20));
     // End of Harcoded Audio by timeout
     if (ai.isPaused())
+    {
+        while (null !== (chunk = ai.read(88200))) {
+            console.log(`flushing stream ${chunk.length} bytes of data.`);
+        }
+            
         ai.resume();
+    }
     else
         ai.start();
 }
@@ -247,6 +253,7 @@ var ai = new portAudio.AudioIO({
         channelCount: 1,
         sampleFormat: portAudio.SampleFormat16Bit,
         sampleRate: 44100,
+        highwaterMark: 88200,    //un paquete completo antes de cortar
         deviceId: -1, // Use -1 or omit the deviceId to select the default device
         closeOnError: false // Close the stream if an audio error is detected, if set false then just log the error        
     }
