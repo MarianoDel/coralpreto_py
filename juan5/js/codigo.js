@@ -77,6 +77,9 @@ span1.innerHTML = '- ';
 span2.innerHTML = '- ';
 span3.innerHTML = '- ';
 
+
+var boton_seleccionado = '0'; //esta variable vas a tener que pisar con el valor que vas a mandar con el socket
+
 function BotonSeleccionado () {
 	var tx = this.getAttribute('data-tx');
 	var rx = this.getAttribute('data-rx');
@@ -84,7 +87,13 @@ function BotonSeleccionado () {
 	span1.innerHTML = tx;
 	span2.innerHTML = rx;
 	span3.innerHTML = channel;
+	boton_seleccionado = 0;
+    	// socket.emit( 'botones', {
+	// 	data: channel
+	// })
 }
+
+
 
 var btns = d.getElementsByClassName("botones");
 //btns[0].className += " activo"; //Agrego el activo al boton todos
@@ -102,7 +111,7 @@ for (var i = 0; i < btns.length; i++) {
 		'click',
 		function () {
 			var current = d.getElementsByClassName("activo");
-			if (typeof current[0] === 'undefined') {
+			if (typeof current[0] === 'undefined' && boton_seleccionado == 0) {
 				this.className += " activo";
 				var id = this.getAttribute('data-id');
 				var tx = this.getAttribute('data-tx');
@@ -112,7 +121,7 @@ for (var i = 0; i < btns.length; i++) {
 				boton_play.setAttribute('data-tx',tx);
 				boton_play.setAttribute('data-rx',rx);
 				boton_play.setAttribute('data-channel',channel);
-			} else {
+			} if (typeof current[0] === 'object' && boton_seleccionado == 0) {
 				current[0].className = current[0].className.replace(" activo", "");
 				this.className += " activo";
 				var id = this.getAttribute('data-id');
@@ -123,14 +132,131 @@ for (var i = 0; i < btns.length; i++) {
 				boton_play.setAttribute('data-tx',tx);
 				boton_play.setAttribute('data-rx',rx);
 				boton_play.setAttribute('data-channel',channel);
-				_c(id, tx, rx, channel);
-			}
+			} 
 		},
 		true
 	);
 }
 
 
+
+
+function cambiaBoton (canal) {
+	_c('puto');
+	for (var i = 0; i < aFrecuencias.length; i++) {
+
+		if (btns[i].getAttribute('data-channel') == canal) {
+			_c(aFrecuencias[i].id);
+			_c(aFrecuencias[i].tx);
+			_c(aFrecuencias[i].rx);
+			btns[i].className += " activo";
+		}
+	}
+}
+
+cambiaBoton(boton_seleccionado);
+
+
+
+
+
+
+
+var txt = '[{"nombre": "MED","comentario":"Alo","status":"0"},{"nombre": "MED2","comentario":"Alo2","status":"0"},{"nombre": "MED3","comentario":"Alo3","status":"1"}]';
+var txt2 = '[{"nombre": "MED se la come","comentario":"Lo sabe todo el mundo!!!","status":"1"}]';
+var tabla_dinamica = d.querySelector('#usuarios');
+function insert(txt) {
+	
+
+	//Recibe el JSON que mandas
+// var txt = '[{"nombre": "MED","comentario":"Alo","status":"0"},{"nombre": "MED2","comentario":"Alo2","status":"0"},{"nombre": "MED3","comentario":"Alo3","status":"1"}]';
+	var tr, td_1, td_2,td_3, span, span_2;
+	var aUsers = JSON.parse(txt);
+
+	for (var i = 0; i < aUsers.length; i++) {
+		tr = d.createElement('tr');
+		tr.setAttribute('class','user');
+		td_1 = d.createElement('td');
+		td_2 = d.createElement('td');
+		td_3 = d.createElement('td');
+		span = d.createElement('span');
+		span_2 = d.createElement('span');
+		td_2.appendChild(span);
+		td_1.innerHTML = aUsers[i].nombre;
+		td_2.innerHTML = aUsers[i].comentario;
+		td_3.innerHTML = '';
+		if (aUsers[i].status == 0) {
+			
+			td_3.setAttribute('class','icon-primitive-dot red');
+		} else {
+			
+			td_3.setAttribute('class','icon-primitive-dot green');
+		}
+	
+		td_2.appendChild(span_2);
+		tr.appendChild(td_1);
+		tr.appendChild(td_2);
+		tr.appendChild(td_3);
+
+		tabla_dinamica.appendChild(tr);
+	}
+}
+
+insert(txt);
+
+
+
+var txt = d.querySelector('.apretando');
+
+function apreto() {
+	txt.innerHTML = 'Estas apretando putito???';
+	//txt.setAttribute('display','block');
+	_c('apreto');
+}
+function suelto() {
+	txt.innerHTML = 'Soltaste......';
+	_c('suelto');
+}
+
+// Cambio de boton PLAY a PAUSE
+var clickCount = 0;
+function myFunction() {
+	var backgroundImg = ['pause_button.png','play_button.png'];
+	var i = clickCount % backgroundImg.length;
+	boton_play.style.backgroundImage='url(img/' + backgroundImg[i] + ')';
+	clickCount++;
+	//saca lo que esta en la tabla
+	var filas = d.querySelectorAll(".user");
+    for (i = 0; i < filas.length; i++) {
+    	filas[i].remove();
+    }
+    
+    insert(txt2);
+}
+
+// var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+
+// socket.on( 'tabla', function(msg) {
+//     //saca lo que esta en la tabla
+//     var filas = d.querySelectorAll(".user");
+//     for (i = 0; i < filas.length; i++) {
+//     	filas[i].remove();
+//     }
+	
+//     // var json = [{"nombre": "MED3","comentario":"Apretaste el boton " + channel,"status":"1"}]	;
+//     // var jsonString = JSON.stringify(json);
+//     // txt = '';
+//     // insert(jsonString);
+    
+//     insert(msg);
+//		cambiaBoton(canal);
+// })
+
+/*
+
+
+var tabla_dinamica = d.getElementById('usuarios');
 var aUsers = [
 	{
 		name: 'Mariano Deleu',
@@ -150,7 +276,7 @@ var aUsers = [
 	}
 ];
 
-var tabla_dinamica = d.getElementById('usuarios');
+
 
 for (var i = 0; i < aUsers.length; i++) {
 	tr = d.createElement('tr');
@@ -174,7 +300,15 @@ for (var i = 0; i < aUsers.length; i++) {
 	tabla_dinamica.appendChild(tr);
 }
 
-/*
+
+
+
+
+
+
+
+
+
 var audio = new Audio();
 audio.src = 'audio/audio.mp3';
 audio.controls = true;
@@ -226,6 +360,7 @@ socket.on( 'connect', function() {
 		data: 'User Connected'
 	})
 })
+
 
 function myFunction() {
 	socket.emit( 'my event', {

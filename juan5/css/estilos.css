@@ -9,7 +9,7 @@
 }
 
 #container {
-	background-image: url("login_background.jpg");
+	background-image: url("../img/login_background.jpg");
 	background-position: center;
 	background-repeat: no-repeat;
 	background-size: cover;
@@ -89,7 +89,7 @@ footer p {
 }
 
 #logo_kirno {
-	background-image: url(Logo_Kirno.png);
+	background-image: url(../img/Logo_Kirno.png);
 	/* img 160 * 95 factor .59375 */
 	width: 160px;
 	height: calc(160px * .59375);
@@ -130,6 +130,11 @@ footer p {
 	flex-direction: column;
 }
 
+.apretando {
+	text-align: center;
+	font-size: 2em;
+}
+
 h2 {
 	display: -webkit-box;
 	display: -ms-flexbox;
@@ -138,7 +143,7 @@ h2 {
 	-ms-flex-align: center;
 	align-items: center;
 	font-size: 3em;
-	margin-bottom: 30px;
+	margin-bottom: 15px;
 }
 
 h2 span {
@@ -175,7 +180,7 @@ h2 span {
 	border: none;
 	color: white;
 	width: 135px;
-	padding: 20px;
+	padding: 12px;
 	text-align: center;
 	text-decoration: none;
 	display: inline-block;
@@ -245,7 +250,7 @@ h2 span {
 }
 
 #play {
-	background-image: url(play_button.png);
+	background-image: url(../img/play_button.png);
 	background-size: cover;
 	border: none;
 	width: 128px;
@@ -407,14 +412,86 @@ background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
 }
 
 #wrap_botones {
-	margin-bottom: 5.5em;
+	margin-bottom: 2.5em;
 }
 
 #wrap_registrado_logo img {
-	margin-bottom: 40px;
+	/*margin-bottom: 40px;*/
 }
 
 }
+
+/*NO LOGIN*/
+
+#container_nologin {
+	background-image: url("../img/no_login_background.jpg");
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
+	height: 100vh;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	-ms-flex-direction: column;
+	flex-direction: column;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+}
+
+.no_login {
+	display: flex;
+	flex-direction: column;
+	margin: auto;
+	padding: 1.5em;
+	background-color: rgba(236, 240, 241,.82);
+	width: 90%;
+	max-width: 500px;
+	border-radius: 12px;
+	text-align: center;
+}
+
+.no_login span {
+	background-image: url('../img/sad_face.png');
+	background-size: cover;
+	border: none;
+	width: 128px;
+	height: 128px;
+	align-self: center;
+}
+
+.no_login p {
+	font-size: 28px;
+	margin: 32px 0;
+	/*color: red;*/
+}
+
+
+.no_login a {
+	text-decoration: none;
+	width: 100%;
+	background-color: #e40017;
+	color: white;
+	padding: 12px 20px;
+	border: 2px solid #e40017;
+	border-radius: 7px;
+	cursor: pointer;
+	font-size: 1.4em;
+	-webkit-transition: 0.3s;
+	-o-transition: 0.3s;
+	transition: 0.3s;
+}
+
+.no_login a:hover {
+	background-color: white;
+	color: #e40017;
+	border: 2px solid #e40017;
+}
+
+
+
 
 
 

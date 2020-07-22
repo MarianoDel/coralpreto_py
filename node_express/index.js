@@ -64,7 +64,7 @@ app.use(express.static('./static'));
 // Websockets Server ----------------------------------------------------------
 // Set up a headless websocket server that prints any events that come in.
 const wsServer = new ws.Server({ noServer: true });
-wsServer.on('connection', (socket) => {
+wsServer.on('connection', (socket, req) => {
     //keep alive msg
     socket.isAlive = true;
     socket.on('pong', heartbeat);
@@ -72,7 +72,7 @@ wsServer.on('connection', (socket) => {
     
     //Rx messages
     socket.on('message', function (message) {
-        // console.log(message + ' from: ' + client);
+        // console.log(message + ' from: ' + Object.getOwnPropertyNames(client));
         console.log(message);        
         try {
             var json_msg = JSON.parse(message);
@@ -161,6 +161,13 @@ const server = app.listen(port, () => console.log(`Example app listening at http
 
 server.on('upgrade', (request, socket, head) => {
     wsServer.handleUpgrade(request, socket, head, socket => {
+        // console.log('clients: ');
+        var client_num = 1;
+        wsServer.clients.forEach(element => {
+            console.log('cliente: ' + client_num);
+            console.log(element);
+            client_num++;
+        });
         wsServer.emit('connection', socket, request);
     });
 });
