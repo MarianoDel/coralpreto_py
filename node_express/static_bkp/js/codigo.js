@@ -51,8 +51,8 @@ var aFrecuencias = [
 	}
 ];
 
-var contenedorDeBotones, boton;
-contenedorDeBotones = d.getElementById('wrap_botones');
+var	boton;
+var contenedorDeBotones = d.getElementById('wrap_botones');
 
 for (var i = 0; i < aFrecuencias.length; i++) {
 	boton = d.createElement('button');
@@ -75,26 +75,27 @@ span1.innerHTML = '- ';
 span2.innerHTML = '- ';
 span3.innerHTML = '- ';
 
-
-var boton_seleccionado = '0'; //esta variable vas a tener que pisar con el valor que vas a mandar con el socket
-
+var boton_seleccionado = 0;
 function BotonSeleccionado () {
 	var tx = this.getAttribute('data-tx');
 	var rx = this.getAttribute('data-rx');
 	var channel = this.getAttribute('data-channel');
 	span1.innerHTML = tx;
 	span2.innerHTML = rx;
-	span3.innerHTML = channel;
-	boton_seleccionado = 0;
-
+    span3.innerHTML = channel;
+    //socket.io
+	// socket.emit( 'botones', {
+	// 	data: channel
+    // })
+    // ws
+    // socket.send( "{\"botones\" : \"data\"}" );
+    // var json_msg = [{"botones" : channel}];
     var json_msg = JSON.stringify({"botones" : channel});
+    // console.log(json_msg);
     socket.send(json_msg);
 }
 
-
-
 var btns = d.getElementsByClassName("botones");
-//btns[0].className += " activo"; //Agrego el activo al boton todos
 
 function addEvent(objeto, evento, funcion, fase) {
 	if(window.addEventListener) {
@@ -136,13 +137,8 @@ for (var i = 0; i < btns.length; i++) {
 	);
 }
 
-
-
-
 function cambiaBoton (canal) {
-	_c('puto');
 	for (var i = 0; i < aFrecuencias.length; i++) {
-
 		if (btns[i].getAttribute('data-channel') == canal) {
 			_c(aFrecuencias[i].id);
 			_c(aFrecuencias[i].tx);
@@ -152,25 +148,12 @@ function cambiaBoton (canal) {
 	}
 }
 
-cambiaBoton(boton_seleccionado);
-
-
-
-
-
-
-
 var txt = '[{"nombre": "MED","comentario":"Alo","status":"0"},{"nombre": "MED2","comentario":"Alo2","status":"0"},{"nombre": "MED3","comentario":"Alo3","status":"1"}]';
-var txt2 = '[{"nombre": "MED se la come","comentario":"Lo sabe todo el mundo!!!","status":"1"}]';
-var tabla_dinamica = d.querySelector('#usuarios');
-function insert(txt) {
-	
 
-	//Recibe el JSON que mandas
-// var txt = '[{"nombre": "MED","comentario":"Alo","status":"0"},{"nombre": "MED2","comentario":"Alo2","status":"0"},{"nombre": "MED3","comentario":"Alo3","status":"1"}]';
+function insert(txt) {
+	var tabla_dinamica = d.querySelector('#usuarios');
 	var tr, td_1, td_2,td_3, span, span_2;
 	var aUsers = JSON.parse(txt);
-
 	for (var i = 0; i < aUsers.length; i++) {
 		tr = d.createElement('tr');
 		tr.setAttribute('class','user');
@@ -184,69 +167,38 @@ function insert(txt) {
 		td_2.innerHTML = aUsers[i].comentario;
 		td_3.innerHTML = '';
 		if (aUsers[i].status == 0) {
-			
 			td_3.setAttribute('class','icon-primitive-dot red');
 		} else {
-			
 			td_3.setAttribute('class','icon-primitive-dot green');
 		}
-	
 		td_2.appendChild(span_2);
 		tr.appendChild(td_1);
 		tr.appendChild(td_2);
 		tr.appendChild(td_3);
-
 		tabla_dinamica.appendChild(tr);
 	}
 }
 
 insert(txt);
 
+var txt = d.querySelector('.apretando');
 
-// var oscillator;
-var ptt_txt = d.querySelector('.apretando');
 function apreto() {
-    ptt_txt.innerHTML = 'PTT On!';
-    _c('ptt in on');
+	txt.innerHTML = 'En Transimision!!!';
+	// socket.emit( 'ptt', {
+	// 	data: 'ON'
+	// })
     var json_msg = JSON.stringify({"ptt" : "ON"});
     socket.send(json_msg);
-    // oscillator = createOscillator();
-    // oscillator.start();
 }
+
 function suelto() {
-    ptt_txt.innerHTML = 'PTT Off';
-    _c('ptt in off');
+	txt.innerHTML = 'Soltaste......';
+	// socket.emit( 'ptt', {
+	// 	data: 'OFF'
+	// })
     var json_msg = JSON.stringify({"ptt" : "OFF"});
-    socket.send(json_msg);
-    // oscillator.stop();    
-}
-
-// Cambio de boton PLAY a PAUSE
-var play_pause_button_in_play = true;
-function playFunction() {
-    if (play_pause_button_in_play) {
-	boton_play.style.backgroundImage='url(img/pause_button.png)';
-        play_pause_button_in_play = false;
-        var json_msg = JSON.stringify({"audio" : "PLAY"});
-        socket.send(json_msg);
-    } else {
-        boton_play.style.backgroundImage='url(img/play_button.png)';
-        play_pause_button_in_play = true;
-        var json_msg = JSON.stringify({"audio" : "STOP"});
-        socket.send(json_msg);
-        flush_counters();
-    }
-
-    // insert_wrapper(txt2);
-}
-
-// limpia la tabla y agrega las nuevas filas en formato json
-function insert_wrapper (json_txt) {
-    var filas = d.querySelectorAll(".user");
-    for (i = 0; i < filas.length; i++) {
-    	filas[i].remove();
-    }
-    insert(json_txt);
+    socket.send(json_msg);    
 }
 
 
@@ -290,7 +242,7 @@ socket.onmessage = e => {
                     '\"comentario\": ' + '\"' + json_msg.comentario + '\",' +
                     '\"status\": ' + '\"' + json_msg.status + '\"}]';
                 console.log(a_tabla);
-                insert_wrapper(a_tabla);
+                insert(a_tabla);
             }
             else if (json_msg.boton_canal != undefined)
             {
@@ -303,8 +255,56 @@ socket.onmessage = e => {
     }
 }
 
+// Con socket.io
+// var socket = io.connect('http://' + document.domain + ':' + location.port);
+// console.log('http://' + document.domain + ':' + location.port);
 
-// Audio webkit
+// socket.on('tabla', function(msg) {
+//     // console.log(msg);
+// 	var filas = d.querySelectorAll(".user");
+// 	for (i = 0; i < filas.length; i++) {
+// 		filas[i].remove();
+// 	}
+// 	insert(msg);
+// })
+
+// socket.on('boton_canal', function(msg) {
+//     // console.log(msg);
+// 	msg_canal = msg.data;
+// 	console.log('msg_canal: ' + msg_canal);
+// 	cambiaBoton(msg_canal);
+// })
+
+var play_pause = 0;
+function play() {
+    if (play_pause == 0) {
+        play_pause = 1;
+
+        var json_msg = JSON.stringify({"audio" : "PLAY"});
+        // console.log(json_msg);
+        socket.send(json_msg);
+
+        // socket.emit( 'audio', {
+	//     data: 'PLAY'
+        // })
+        // console.log('Play ON')
+        // audioCtx.resume();
+    }
+    else {        
+        play_pause = 0;
+        var json_msg = JSON.stringify({"audio" : "STOP"});
+        // console.log(json_msg);
+        socket.send(json_msg);
+        
+        // socket.emit( 'audio', {
+	//     data: 'STOP'
+        // })
+        flush_counters();
+        // console.log('Play OFF')
+        // audioCtx.suspend();
+    }        
+}
+
 var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 var nextStartTime = 0;
 var buffer_time = 0;
@@ -313,6 +313,34 @@ var buffer_underrun = 0;
 function flush_counters () {
     nextStartTime = 0;
 }
+
+
+// socket.on('audio_start', function(msg) {
+//     console.log(msg);
+// })
+
+// socket.on('audio_int16', function(msg) {
+//     console.log('audio 16');
+//     var chunks = [];
+//     chunks = msg.data;
+//     createSoundSource_int16(chunks);
+//     console.log('audio 16');
+// })
+
+
+// socket.on('audio_int32', function(msg) {
+//     var chunks = [];
+//     chunks = msg.data;
+//     createSoundSource_int32(chunks);
+// })
+
+
+// socket.on('audio_f32', function(msg) {
+//     var chunks = [];
+//     chunks = msg.data;
+//     createSoundSource_f32(chunks);
+// })
+
 
 function createSoundSource_int16 (audio_int16array) {
     // audioCtx.resume();    //soluciona error con chrome
@@ -376,134 +404,83 @@ function createSoundSource_int16 (audio_int16array) {
 }
 
 
-// Oscillator
-function createOscillator () {
-    if (!audioCtx)
-        console.log('no context!!!');
-    else {
-        // create Oscillator node
-        var oscillator = audioCtx.createOscillator();
+function createSoundSource_int32 (audioData) {
+    // audioCtx.resume();    //soluciona error con chrome
+    var audiobuf = new Int32Array(audioData);
+    //console.log('audiobuf[0]: '+ audiobuf[0]);
 
-        oscillator.type = 'square';
-        oscillator.frequency.setValueAtTime(400, audioCtx.currentTime); // value in hertz
-        oscillator.connect(audioCtx.destination);
-        
-        const start = () => oscillator.start();
-        const stop = () => oscillator.stop();
-        console.log('oscillator created use start or stop to use it');
-        return { start, stop };        
+    // creo el buffer de audio, pido referencia y le copio las muestras
+    audioBuffer = audioCtx.createBuffer(1, audiobuf.length, 44100);
+    var samples_ref = audioBuffer.getChannelData(0);
+    // samples_ref.set(audiobuf);
+
+    for (var i = 0; i < audiobuf.length; i++) {
+        samples_ref[i] = audiobuf[i] / 2147483648;
+    }      
+
+    var source = audioCtx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(audioCtx.destination);
+    if (nextStartTime == 0) {
+        // este es el primer paquete
+        // me guardo el primer buffer y ajusto los contadores
+        buffer_time = audioBuffer.length / audioBuffer.sampleRate;              
+        nextStartTime = audioCtx.currentTime + buffer_time;
+        console.log('int32 chunk time: '+ buffer_time + ' next start: ' + nextStartTime);        
+    } else {
+        // los paquetes que siguen
+        if (buffer_underrun < audioCtx.currentTime) {
+            //se agoto el primer buffer dejo pasar un schedule
+            nextStartTime = audioCtx.currentTime + buffer_time;
+            console.log('underrun: ' + buffer_underrun + ' current: ' + audioCtx.currentTime);
+        }
+        else {
+            // todavia tengo algo de buffer calculo el tiempo de comienzo del proximo chunk
+            nextStartTime = buffer_underrun;
+        }
     }
+
+    buffer_underrun = nextStartTime + buffer_time;
+    // console.log('under: ' + buffer_underrun)
+    source.start(nextStartTime);
+
 }
 
-// get permission to use mic
-window.navigator.getUserMedia({ audio:true }, (stream) => {
-    const audioContext = new AudioContext();
-    // get mic stream
-    const source = audioContext.createMediaStreamSource( stream );
-    // const scriptNode = audioContext.createScriptProcessor(4096, 1, 1);
-    const scriptNode = audioContext.createScriptProcessor(16384, 1, 1);    
-    source.connect(scriptNode);
-    scriptNode.connect(audioContext.destination);
-    // output to speaker
-    // source.connect(audioContext.destination);
 
-    // on process event
-    scriptNode.onaudioprocess = (e) => {
-        // get mica data        
-        // console.log(e.inputBuffer.getChannelData(0))
-        var inputChannel = e.inputBuffer.getChannelData(0);
-        console.log('mic input: ' + typeof inputChannel + ' mic size: ' + inputChannel.length);
-        var buffer_to_send = 
-        socket.send(inputChannel);
-        // mic_fr.readAsArrayBuffer(e.inputBuffer);
-    };
-}, console.log);
+function createSoundSource_f32 (audioData) {
+    // audioCtx.resume();    //soluciona error con chrome
+    var audiobuf = new Float32Array(audioData);
+    //console.log('audiobuf[0]: '+ audiobuf[0]);
 
-// const mic_fr = new FileReader();
-// mic_fr.onload = () => {
-//     // It worked
-//     const array = new Int16Array(mic_fr.result);
-//     socket.send(array);
-// };
+    // creo el buffer de audio, pido referencia y le copio las muestras
+    audioBuffer = audioCtx.createBuffer(1, audiobuf.length, 44100);
+    var samples_ref = audioBuffer.getChannelData(0);
+    samples_ref.set(audiobuf);
+      
+    var source = audioCtx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(audioCtx.destination);
+    if (nextStartTime == 0) {
+        // este es el primer paquete
+        // me guardo el primer buffer y ajusto los contadores
+        buffer_time = audioBuffer.length / audioBuffer.sampleRate;              
+        nextStartTime = audioCtx.currentTime + buffer_time;
+        console.log('f32 chunk time: '+ buffer_time + ' next start: ' + nextStartTime);        
+    } else {
+        // los paquetes que siguen
+        if (buffer_underrun < audioCtx.currentTime) {
+            //se agoto el primer buffer dejo pasar un schedule
+            nextStartTime = audioCtx.currentTime + buffer_time;
+            console.log('underrun: ' + buffer_underrun + ' current: ' + audioCtx.currentTime);
+        }
+        else {
+            // todavia tengo algo de buffer calculo el tiempo de comienzo del proximo chunk
+            nextStartTime = buffer_underrun;
+        }
+    }
 
-// mic_fr.onerror = () => {
-//     // The read failed, handle/report it
-//     console.log('audio buffer not converted');
-// };
+    buffer_underrun = nextStartTime + buffer_time;
+    // console.log('under: ' + buffer_underrun)
+    source.start(nextStartTime);
 
-
-// var oscillator = createOscillator();
-// oscillator.start();
-// const timeout_osc = setTimeout(() => {
-//   oscillator.stop();
-// }, 2000);
-
-/*
-for (var i = 0; i < aUsers.length; i++) {
-	tr = d.createElement('tr');
-	td_1 = d.createElement('td');
-	td_2 = d.createElement('td');
-	span = d.createElement('span');
-	span_2 = d.createElement('span');
-	td_2.appendChild(span);
-	td_1.innerHTML = aUsers[i].name;
-	if (aUsers[i].status == 0) {
-		span_2.innerHTML = 'Desconectado';
-		span.setAttribute('class','icon-primitive-dot red');
-	} else {
-		span_2.innerHTML = 'Conectado';
-		span.setAttribute('class','icon-primitive-dot green');
-	}
-	td_2.appendChild(span_2);
-	tr.appendChild(td_1);
-	tr.appendChild(td_2);
-
-	tabla_dinamica.appendChild(tr);
 }
-
-var audio = new Audio();
-audio.src = 'audio/audio.mp3';
-audio.controls = true;
-audio.loop = true;
-audio.autoplay = true;
-// Establish all variables that your Analyser will use
-var canvas, ctx, source, context, analyser, fbc_array, bars, bar_x, bar_width, bar_height;
-// Initialize the MP3 player after the page loads all of its HTML into the window
-window.addEventListener("load", initMp3Player, false);
-function initMp3Player(){
-	document.getElementById('audio_box').appendChild(audio);
-	context = new (window.AudioContext || window.webkitAudioContext)();
-	analyser = context.createAnalyser(); // AnalyserNode method
-	canvas = document.getElementById('analyser_render');
-	ctx = canvas.getContext('2d');
-	// Re-route audio playback into the processing graph of the AudioContext
-	source = context.createMediaElementSource(audio); 
-	source.connect(analyser);
-	analyser.connect(context.destination);
-	frameLooper();
-}
-// frameLooper() animates any style of graphics you wish to the audio frequency
-// Looping at the default frame rate that the browser provides(approx. 60 FPS)
-function frameLooper(){
-	window.RequestAnimationFrame(frameLooper);
-	fbc_array = new Uint8Array(analyser.frequencyBinCount);
-	analyser.getByteFrequencyData(fbc_array);
-	ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
-	ctx.fillStyle = '#00CCFF'; // Color of the bars
-	bars = 100;
-	for (var i = 0; i < bars; i++) {
-		bar_x = i * 3;
-		bar_width = 2;
-		bar_height = -(fbc_array[i] / 2);
-		//  fillRect( x, y, width, height ) // Explanation of the parameters below
-		ctx.fillRect(bar_x, canvas.height, bar_width, bar_height);
-	}
-}
-*/
-
-
-
-
-
-
-

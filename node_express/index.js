@@ -32,7 +32,6 @@ app.get('/', (req, res) => {
 
 
 app.get('/login', (req, res) => {
-    // res.sendFile('/home/med/Documents/Projects/CoralPetro/node_express/static/login.html');
     res.sendFile(path.join(__dirname + '/static/login.html'));
 });
 
@@ -47,14 +46,32 @@ app.post('/login', urlencodedParser, (req, res) => {
         res.redirect('/registrado');
     }
     else {
-        res.send('<h1>Please enter correct Username and Password!</h1>');
-	res.end();
+        res.redirect('/no_login');
+    }
+});
+
+app.post('/login.html', urlencodedParser, (req, res) => {
+    var username = req.body.uname;
+    var password = req.body.psw;
+    console.log('uname: ' + username + ' psw: ' + password);
+    if ((username == 'admin' && password == 'admin') ||
+        (username == 'maxi' && password == 'maxi') ||
+        (username == 'med' && password == 'med')) {
+        // res.send('<h1>Logged IN!</h1>');
+        res.redirect('/registrado');
+    }
+    else {
+        res.redirect('/no_login');
     }
 });
 
 app.get('/registrado', (req, res) => {
     // res.sendFile('/home/med/Documents/Projects/CoralPetro/node_express/static/login.html');
     res.sendFile(path.join(__dirname + '/static/registrado.html'));
+});
+
+app.get('/no_login', (req, res) => {
+    res.sendFile(path.join(__dirname + '/static/no-login.html'));
 });
 
 // Static served files ---------------------------------------------------------
@@ -73,59 +90,73 @@ wsServer.on('connection', (socket, req) => {
     //Rx messages
     socket.on('message', function (message) {
         // console.log(message + ' from: ' + Object.getOwnPropertyNames(client));
-        console.log(message);        
-        try {
-            var json_msg = JSON.parse(message);
+        console.log(message);
+        console.log('typeof message: ' + typeof message);
+        console.log('msg len: ' + message.length);
+        // if ((message instanceof ArrayBuffer) || (message instanceof Blob))
+        if (message instanceof ArrayBuffer)
+        // if (message instanceof AudioBuffer)            
+        {
+            var size = message.size;
+            console.log('array or blob size: ' + size);
+            // if ((fr.readyState == 0) || (fr.readyState == 2))
+            //     fr.readAsArrayBuffer(e.data);
+        }
+        else if (typeof message === "string")
+        {
+            try {
+                var json_msg = JSON.parse(message);
 
-            if (json_msg.botones != undefined)
-            {
-                console.log('botones: ' + json_msg.botones);
-                gpios.ChannelToGpios(json_msg.botones);
+                if (json_msg.botones != undefined)
+                {
+                    console.log('botones: ' + json_msg.botones);
+                    gpios.ChannelToGpios(json_msg.botones);
 
-                //Tx messages
-                var json_res = {
-                    "tabla" : "undef",
-                    "nombre": "MED",
-                    "comentario":"changed to channel " + json_msg.botones,
-                    "status":"1" };
+                    //Tx messages
+                    var json_res = {
+                        "tabla" : "undef",
+                        "nombre": "MED",
+                        "comentario":"changed to channel " + json_msg.botones,
+                        "status":"1" };
+                    
+                    // json_msg = "server msg";
+                    socket.send(JSON.stringify(json_res));
+                    // socket.send(json_msg);
+                    //prueba envio binario
+                    // var bin = new Float32Array(5);
+                    // bin[0] = 55.5;
+                    // bin[1] = 55.5;
+                    // bin[2] = 55.5;
+                    // bin[3] = 55.5;
+                    // bin[4] = 55.5;
+                    // socket.send(bin);
+                }
+                else if (json_msg.ptt != undefined)
+                {
+                    console.log('ptt: ' + json_msg.ptt);
+                    if (json_msg.ptt == 'ON')
+                        gpios.Ptt_On();
+                    else
+                        gpios.Ptt_Off();
+                }
+                else if (json_msg.audio != undefined)
+                {
+                    console.log('audio: ' + json_msg.audio);
+                    if (json_msg.audio == 'PLAY')
+                    {
+                        start_sending_audio();
+                        // start_sending_harcoded_audio();
+                    }
+                    else
+                    {
+                        stop_sending_audio();
+                        // stop_sending_harcoded_audio();
+                    }
+                }
                 
-                // json_msg = "server msg";
-                socket.send(JSON.stringify(json_res));
-                // socket.send(json_msg);
-                //prueba envio binario
-                // var bin = new Float32Array(5);
-                // bin[0] = 55.5;
-                // bin[1] = 55.5;
-                // bin[2] = 55.5;
-                // bin[3] = 55.5;
-                // bin[4] = 55.5;
-                // socket.send(bin);
+            } catch (error) {
+                // console.error(error);
             }
-            else if (json_msg.ptt != undefined)
-            {
-                console.log('ptt: ' + json_msg.ptt);
-                if (json_msg.ptt == 'ON')
-                    gpios.Ptt_On();
-                else
-                    gpios.Ptt_Off();
-            }
-            else if (json_msg.audio != undefined)
-            {
-                console.log('audio: ' + json_msg.audio);
-                if (json_msg.audio == 'PLAY')
-                {
-                    start_sending_audio();
-                    // start_sending_harcoded_audio();
-                }
-                else
-                {
-                    stop_sending_audio();
-                    // stop_sending_harcoded_audio();
-                }
-            }
-            
-        } catch (error) {
-            // console.error(error);
         }
         
         // var obj = JSON.parse(message);
