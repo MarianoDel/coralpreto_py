@@ -207,20 +207,26 @@ insert(txt);
 var ptt_txt = d.querySelector('.apretando');
 var send_mic_audio = false;
 function apreto() {
-    ptt_txt.innerHTML = 'PTT On!';
-    _c('ptt in on');
-    var json_msg = JSON.stringify({"ptt" : "ON"});
-    socket.send(json_msg);
-    send_mic_audio = true;
+    if (socket.readyState == WebSocket.OPEN) {
+        ptt_txt.innerHTML = 'PTT On!';
+        _c('ptt in on');
+        var json_msg = JSON.stringify({"ptt" : "ON"});
+        socket.send(json_msg);
+        send_mic_audio = true;
+    } else {
+        ptt_txt.innerHTML = 'Server disconnected!!';
+    }
     // oscillator = createOscillator();
     // oscillator.start();
 }
 function suelto() {
     ptt_txt.innerHTML = 'PTT Off';
     _c('ptt in off');
-    var json_msg = JSON.stringify({"ptt" : "OFF"});
-    socket.send(json_msg);
     send_mic_audio = false;
+    if (socket.readyState == WebSocket.OPEN) {
+        var json_msg = JSON.stringify({"ptt" : "OFF"});
+        socket.send(json_msg);
+    }
     // oscillator.stop();    
 }
 
@@ -414,8 +420,7 @@ window.navigator.getUserMedia({ audio:true }, (stream) => {
     scriptNode.onaudioprocess = (e) => {
         // get mica data        
         // console.log(e.inputBuffer.getChannelData(0))
-        if ((send_mic_audio) &&
-            (socket.readyState == WebSocket.OPEN)) {
+        if (send_mic_audio) {
             var inputChannel = e.inputBuffer.getChannelData(0);
             var inputChannel_len = inputChannel.length;
             console.log('mic input: ' + typeof inputChannel + ' mic size: ' + inputChannel_len);
