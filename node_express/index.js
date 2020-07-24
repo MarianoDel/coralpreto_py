@@ -108,13 +108,12 @@ wsServer.on('connection', (socket, req) => {
         }
         else if (typeof message === "string")
         {
-            console.log('msg len: ' + message.length);
+            console.log('msg: ' + message + ' msg len: ' + message.length);
 
             try {
                 var json_msg = JSON.parse(message);
 
-                if (json_msg.botones != undefined)
-                {
+                if (json_msg.botones != undefined) {
                     console.log('botones: ' + json_msg.botones);
                     gpios.ChannelToGpios(json_msg.botones);
 
@@ -137,31 +136,36 @@ wsServer.on('connection', (socket, req) => {
                     // bin[4] = 55.5;
                     // socket.send(bin);
                 }
-                else if (json_msg.ptt != undefined)
-                {
+                else if (json_msg.ptt != undefined) {
                     console.log('ptt: ' + json_msg.ptt);
                     if (json_msg.ptt == 'ON')
                         gpios.Ptt_On();
                     else
                         gpios.Ptt_Off();
                 }
-                else if (json_msg.audio != undefined)
-                {
+                else if (json_msg.audio != undefined) {
                     console.log('audio: ' + json_msg.audio);
-                    if (json_msg.audio == 'PLAY')
-                    {
+                    if (json_msg.audio == 'PLAY') {
                         start_sending_audio();
                         // start_sending_harcoded_audio();
                     }
-                    else
-                    {
+                    else {
                         stop_sending_audio();
                         // stop_sending_harcoded_audio();
                     }
                 }
+                else if (json_msg.ws_open != undefined) {
+                    //Tx message
+                    var json_res = JSON.stringify({"boton_canal" : gpios.GpiosToChannel()});
+                    console.log('sended: ' + json_res);
+                    socket.send((json_res));
+                }
+                else {
+                    console.log('no handler for this data');
+                }
                 
             } catch (error) {
-                // console.error(error);
+                console.error(error);
             }
         }
         
@@ -177,6 +181,7 @@ wsServer.on('connection', (socket, req) => {
     });
     
 });
+
 
 // Initialize Gpios module -----------------------------------------------------
 gpios.GpiosInit();

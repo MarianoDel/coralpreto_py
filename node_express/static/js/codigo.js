@@ -263,7 +263,8 @@ function insert_wrapper (json_txt) {
 const socket = new WebSocket('ws://' + document.domain + ':' + location.port);
 
 socket.onopen = () => {
-    socket.send('Here\'s some text that the server is urgently awaiting!'); 
+    var json_msg = JSON.stringify({"ws_open" : "client"});
+    socket.send(json_msg);
 }
 
 const fr = new FileReader();
@@ -303,7 +304,7 @@ socket.onmessage = e => {
             }
             else if (json_msg.boton_canal != undefined)
             {
-                console.log("boton canal: " + json_msg.boton_canal);
+                console.log("boton_canal: " + json_msg.boton_canal);
                 cambiaBoton(json_msg.boton_canal);
             }
         }

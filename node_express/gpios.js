@@ -191,6 +191,9 @@ function Bit0_Off() {
 
 
 function ChannelToGpios (channel_string) {
+    if (running_on_slackware)
+        return;
+
     switch (channel_string)
     {
         case '09':
@@ -250,6 +253,9 @@ function ChannelToGpios (channel_string) {
 }
 
 function GpiosToChannel () {
+    if (running_on_slackware)
+        return '09';
+    
     if ((bit0.readSync() === 0) &&
         (bit1.readSync() === 0) &&
         (bit2.readSync() === 0))
