@@ -205,11 +205,13 @@ insert(txt);
 
 // var oscillator;
 var ptt_txt = d.querySelector('.apretando');
+var send_mic_audio = false;
 function apreto() {
     ptt_txt.innerHTML = 'PTT On!';
     _c('ptt in on');
     var json_msg = JSON.stringify({"ptt" : "ON"});
     socket.send(json_msg);
+    send_mic_audio = true;
     // oscillator = createOscillator();
     // oscillator.start();
 }
@@ -218,6 +220,7 @@ function suelto() {
     _c('ptt in off');
     var json_msg = JSON.stringify({"ptt" : "OFF"});
     socket.send(json_msg);
+    send_mic_audio = false;
     // oscillator.stop();    
 }
 
@@ -411,25 +414,24 @@ window.navigator.getUserMedia({ audio:true }, (stream) => {
     scriptNode.onaudioprocess = (e) => {
         // get mica data        
         // console.log(e.inputBuffer.getChannelData(0))
-        var inputChannel = e.inputBuffer.getChannelData(0);
-        console.log('mic input: ' + typeof inputChannel + ' mic size: ' + inputChannel.length);
-        var buffer_to_send = 
-        socket.send(inputChannel);
-        // mic_fr.readAsArrayBuffer(e.inputBuffer);
+        if ((send_mic_audio) &&
+            (socket.readyState == WebSocket.OPEN)) {
+            var inputChannel = e.inputBuffer.getChannelData(0);
+            var inputChannel_len = inputChannel.length;
+            console.log('mic input: ' + typeof inputChannel + ' mic size: ' + inputChannel_len);
+            var buffer = new ArrayBuffer (inputChannel_len * Int16Array.BYTES_PER_ELEMENT);
+            var view_buffer = new Int16Array (buffer);
+            for (var i = 0; i < inputChannel_len; i++) {
+                view_buffer[i] = inputChannel[i] * 32767;
+            }
+            console.log('send: ' + typeof buffer +
+                        ' size: ' + buffer.byteLength);
+            socket.bufferType = "arraybuffer";
+            socket.send(buffer);
+        }
     };
 }, console.log);
 
-// const mic_fr = new FileReader();
-// mic_fr.onload = () => {
-//     // It worked
-//     const array = new Int16Array(mic_fr.result);
-//     socket.send(array);
-// };
-
-// mic_fr.onerror = () => {
-//     // The read failed, handle/report it
-//     console.log('audio buffer not converted');
-// };
 
 
 // var oscillator = createOscillator();

@@ -86,24 +86,30 @@ wsServer.on('connection', (socket, req) => {
     socket.isAlive = true;
     socket.on('pong', heartbeat);
     gpios.LedBlueBlinking_On();
+    socket.binaryType = "arraybuffer";
     
     //Rx messages
     socket.on('message', function (message) {
         // console.log(message + ' from: ' + Object.getOwnPropertyNames(client));
-        console.log(message);
+        // console.log(message);
         console.log('typeof message: ' + typeof message);
-        console.log('msg len: ' + message.length);
+
         // if ((message instanceof ArrayBuffer) || (message instanceof Blob))
         if (message instanceof ArrayBuffer)
-        // if (message instanceof AudioBuffer)            
         {
-            var size = message.size;
+            var size = message.byteLength;
             console.log('array or blob size: ' + size);
+            if (aio) {
+                const buffer = Buffer.from(message);
+                aio.write(buffer);
+            }
             // if ((fr.readyState == 0) || (fr.readyState == 2))
             //     fr.readAsArrayBuffer(e.data);
         }
         else if (typeof message === "string")
         {
+            console.log('msg len: ' + message.length);
+
             try {
                 var json_msg = JSON.parse(message);
 
@@ -341,7 +347,39 @@ function create_buffer_int16 (samples, frequency, sampleRate) {
 // var ai;
 // ai = create_ai_input(ai);
 
-var ai = new portAudio.AudioIO({
+// Solo audio input ------------------------------------------------------------
+// var ai = new portAudio.AudioIO({
+//     inOptions: {
+//         channelCount: 1,
+//         sampleFormat: portAudio.SampleFormat16Bit,
+//         sampleRate: 44100,
+//         highwaterMark: 88200,    //un paquete completo antes de cortar
+//         deviceId: -1, // Use -1 or omit the deviceId to select the default device
+//         closeOnError: false // Close the stream if an audio error is detected, if set false then just log the error        
+//     }
+// });
+
+// ai.on('data', onDataCallback);
+
+// function onDataCallback (buffer) {
+//     wsServer.clients.forEach(function each(client) {
+//         if (client.readyState === ws.OPEN) {
+//             if (single_client_play)
+//             {
+//                 client.send(buffer);
+//                 console.log('pkt: ' + pck_cnt + ' size: ' + buffer.length);
+//             }
+//             else
+//                 console.log('flushed portaudio size: ' + buffer.length);
+//         }
+//     });
+//     pck_cnt++;
+// };
+
+// ai.start();
+
+// Audio input & output --------------------------------------------------------
+var aio = new portAudio.AudioIO({
     inOptions: {
         channelCount: 1,
         sampleFormat: portAudio.SampleFormat16Bit,
@@ -349,10 +387,18 @@ var ai = new portAudio.AudioIO({
         highwaterMark: 88200,    //un paquete completo antes de cortar
         deviceId: -1, // Use -1 or omit the deviceId to select the default device
         closeOnError: false // Close the stream if an audio error is detected, if set false then just log the error        
+    },
+    outOptions: {
+        channelCount: 1,
+        sampleFormat: portAudio.SampleFormat16Bit,
+        sampleRate: 44100,
+        highwaterMark: 32768,    //un paquete completo antes de cortar
+        deviceId: -1, // Use -1 or omit the deviceId to select the default device
+        closeOnError: false
     }
 });
 
-ai.on('data', onDataCallback);
+aio.on('data', onDataCallback);
 
 function onDataCallback (buffer) {
     wsServer.clients.forEach(function each(client) {
@@ -369,7 +415,8 @@ function onDataCallback (buffer) {
     pck_cnt++;
 };
 
-ai.start();
+aio.start();
+
 
 // Audio with naudiodon (using Streams ) ---------------------------------------
 // Create an instance of AudioIO with outOptions (defaults are as below), which will return a WritableStream
