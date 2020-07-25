@@ -1,8 +1,9 @@
 const portAudio = require('naudiodon');
-const fs = require('fs');
 
 const running_on_slackware = true;
 const running_on_raspbian = !running_on_slackware;
+
+const stop_in_secs = 10;    //or 0 if is continuous
 
 // Chequeo los dispositivos disponibles ----------------------------------------
 console.log(portAudio.getDevices());
@@ -11,6 +12,7 @@ console.log(portAudio.getDevices());
 // Create an instance of AudioIO with outOptions (defaults are as below), which will return a WritableStream
 var audio_options;
 if (running_on_slackware) {
+    console.log('\nRunning on Slackware!!!\n');
     audio_options = {
         outOptions: {
             // channelCount: 2,
@@ -24,6 +26,7 @@ if (running_on_slackware) {
         }
     }
 } else {
+    console.log('\nRunning on Raspbian!!!\n');
     audio_options = {
         outOptions: {
             // channelCount: 2,
@@ -40,55 +43,8 @@ if (running_on_slackware) {
 
 var ao = new portAudio.AudioIO(audio_options);
 
-// // var rs = fs.createReadStream('../hernandez.wav');
-// // var rs = fs.createReadStream('../2minutos.wav');
-// var rs = fs.createReadStream('../ZAZ.wav');
 
-// // paused mode con stream-read ----------
-// // rs.on('readable', () => {
-// //   let chunk;
-// //   while (null !== (chunk = rs.read(1024))) {
-// //     console.log(`Received ${chunk.length} bytes of data.`);
-// //   }
-// // });
-
-// // var end_the_reading = 0;
-// // rs.on('readable', () => {
-// //     let chunk;
-// //     if (!end_the_reading) {
-// //         console.log('start the reading, readable flowing mode: ' + rs.readableFlowing);    
-// //         for(var i = 0; i <10; i++) {
-// //             chunk = rs.read(1024);
-// //             console.log(`Received ${chunk.length} bytes of data. And seq: ${i}`);
-// //         }
-// //         end_the_reading = 1;
-// //     }
-// //     console.log('readable called, end_the_reading: ' + end_the_reading);    
-// // });
-
-// // paused mode -----------------------------------------------------------------
-// // ao.write(rs.read(1024), function cbw () => {
-// //     console.log('cbw 1024');    
-// // });
-// // rs.on("data",chunk=>ao.write(chunk));    //esto termina de leer rapido y deja todo en el buffer
-
-// // with timed interval ---------------------------------------------------------
-// // repeat with the interval of 500 mseconds
-// const chunk_time_ms = 1000;
-// const sampleRate = 44100;
-// const size = chunk_time_ms * sampleRate / 1000;
-// var pck_cnt = 0;
-// console.log('chunk size: ' + size);
-
-// // let timerId = setInterval(() => {
-// //     let chunk = rs.read(size);
-// //     ao.write(chunk);
-// //     console.log(`Received ${chunk.length} bytes of data. pck_cnt: ${pck_cnt}`);
-// //     pck_cnt++;
-    
-// // }, chunk_time_ms);
-
-// create a sine wave lookup table
+// create a sine wave lookup table ---------------------------------------------
 const chunk_time_ms = 1000;
 const sampleRate = 44100;
 const size = chunk_time_ms * sampleRate / 1000;
@@ -108,6 +64,8 @@ console.log('check for chunks cuts [0]: ' + buffer[0] +
             ' [' + (buffer.length - 1) + ']: ' + buffer[(buffer.length - 1)]);
 var buffer_new = Buffer.from(buffer.buffer);
 
+
+// Interval to send audio samples to the device --------------------------------
 let timerId = setInterval(() => {
     ao.write(buffer_new);
     console.log(`buffer_new length: ${buffer_new.length} pck_cnt: ${pck_cnt}`);
@@ -115,17 +73,13 @@ let timerId = setInterval(() => {
     
 }, (chunk_time_ms - 20));
 
-// // flowing mode con data-event ----------
-// // rs.on('data', (chunk) => {
-// //     console.log(`Received ${chunk.length} bytes of data.`);
-// //     ao.write(chunk);
-// // });
 
-// rs.on('end', () => {
-//     console.log('no more data');
-//     clearTimeout(timerId);
-// });
+if (stop_in_secs) {
+    setTimeout(() => {
+        clearTimeout(timerId);
+        console.log('test ended');
+    }, stop_in_secs * 1000);
+}
 
-// // Start piping data and start streaming
-// // rs.pipe(ao);
 ao.start();
+
