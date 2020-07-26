@@ -493,3 +493,10 @@ const interval = setInterval(function ping() {
     });
 }, 10000);
 
+
+// catch exit signal -----------------------------------------------------------
+process.on('SIGINT', function() {
+    console.log("Caught interrupt signal, closing");
+    gpios.OnOff_Off();
+    process.exit();
+});
