@@ -63,7 +63,9 @@ const TestChannel = async () => {
     gpios.OnOff_Off();    
 }
 
-
+function TestCycle () {
+    gpios.OnOff_Cycle_On();
+}
 ////////////////
 // Main Tests //
 ////////////////
@@ -71,5 +73,6 @@ InitialValues();
 // TestBlue();
 // TestPtt();
 // TestEncendido();
-TestChannel();
+// TestChannel();
+TestCycle();
 

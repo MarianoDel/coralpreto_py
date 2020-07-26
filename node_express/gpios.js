@@ -109,7 +109,17 @@ function OnOff_Off() {
     }
 }
 
-
+function OnOff_Cycle_On () {
+    (async () => {
+        await OnOff_Off();
+        await setTimeout(() => {
+            OnOff_On();
+        }, 5000);
+        await setTimeout(() => {
+            console.log('device must be ready!');
+        }, 15000);
+    })();
+}
 /////////
 // Ptt //
 /////////
@@ -313,6 +323,8 @@ function GpiosToChannel () {
     }
 }
 
+
+
 // Module Exported Funtions ----------------------------------------------------
 exports.GpiosInit = GpiosInit;
 
@@ -323,6 +335,7 @@ exports.LedBlueBlinking_Off = LedBlueBlinking_Off;
 
 exports.OnOff_On = OnOff_On;
 exports.OnOff_Off = OnOff_Off;
+exports.OnOff_Cycle_On = OnOff_Cycle_On;
 
 exports.Ptt_On = Ptt_On;
 exports.Ptt_Off = Ptt_Off;
@@ -338,5 +351,6 @@ exports.Bit2_Off = Bit2_Off;
 
 exports.ChannelToGpios = ChannelToGpios;
 exports.GpiosToChannel = GpiosToChannel;
+
 
 
