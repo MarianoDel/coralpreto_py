@@ -10,7 +10,8 @@ const fs = require('fs');
 const app = express();
 const port = 3000;
 
-
+const running_on_slackware = true;
+const running_on_raspbian = !running_on_slackware;
 // Middleware functions --------------------------------------------------------
 // create application/json parser
 var jsonParser = bodyParser.json()
@@ -94,17 +95,12 @@ wsServer.on('connection', (socket, req) => {
         // console.log(message);
         console.log('typeof message: ' + typeof message);
 
-        // if ((message instanceof ArrayBuffer) || (message instanceof Blob))
         if (message instanceof ArrayBuffer)
         {
             var size = message.byteLength;
             console.log('array or blob size: ' + size);
-            if (aio) {
-                const buffer = Buffer.from(message);
-                aio.write(buffer);
-            }
-            // if ((fr.readyState == 0) || (fr.readyState == 2))
-            //     fr.readAsArrayBuffer(e.data);
+            const buffer = Buffer.from(message);
+            onRxSamples(buffer);
         }
         else if (typeof message === "string")
         {
@@ -384,34 +380,74 @@ function create_buffer_int16 (samples, frequency, sampleRate) {
 // ai.start();
 
 // Audio input & output --------------------------------------------------------
-var aio = new portAudio.AudioIO({
-    inOptions: {
-        channelCount: 1,
-        sampleFormat: portAudio.SampleFormat16Bit,
-        sampleRate: 44100,
-        highwaterMark: 88200,    //un paquete completo antes de cortar
-        deviceId: -1, // Use -1 or omit the deviceId to select the default device
-        closeOnError: false // Close the stream if an audio error is detected, if set false then just log the error        
-    },
-    outOptions: {
-        channelCount: 1,
-        sampleFormat: portAudio.SampleFormat16Bit,
-        sampleRate: 44100,
-        highwaterMark: 32768,    //un paquete completo antes de cortar
-        deviceId: -1, // Use -1 or omit the deviceId to select the default device
-        closeOnError: false
+var audio_in_options;
+var audio_out_options;
+if (running_on_slackware) {
+    console.log('\nRunning on Slackware!!!\n');
+    audio_in_options = {
+        inOptions: {
+            channelCount: 1,
+            sampleFormat: portAudio.SampleFormat16Bit,
+            sampleRate: 44100,
+            highwaterMark: 88200,    //un paquete completo antes de cortar
+            deviceId: -1, // Use -1 or omit the deviceId to select the default device
+            closeOnError: false // Close the stream on error or just log it
+        }
     }
-});
 
-aio.on('data', onDataCallback);
+    audio_out_options = {
+        outOptions: {
+            // channelCount: 2,
+            channelCount: 1,
+            sampleFormat: portAudio.SampleFormat16Bit,
+            // sampleFormat: portAudio.SampleFormat8Bit,
+            sampleRate: 44100,
+            deviceId: -1, // Use -1 or omit the deviceId to select the default device
+            // highwaterMark: 1024,
+            closeOnError: false // Close the stream on error or just log it
+        }
+    }
+} else {
+    console.log('\nRunning on Raspbian!!!\n');
+    audio_in_options = {
+        inOptions: {
+            channelCount: 1,
+            sampleFormat: portAudio.SampleFormat16Bit,
+            sampleRate: 44100,
+            highwaterMark: 88200,    //un paquete completo antes de cortar
+            deviceId: 0, // Use -1 or omit the deviceId to select the default device
+            closeOnError: false // Close the stream on error or just log it
+        }
+    }
 
+    audio_out_options = {
+        outOptions: {
+            // channelCount: 2,
+            channelCount: 1,
+            sampleFormat: portAudio.SampleFormat16Bit,
+            // sampleFormat: portAudio.SampleFormat8Bit,
+            sampleRate: 44100,
+            deviceId: 0, // Use -1 or omit the deviceId to select the default device
+            highwaterMark: 32768,
+            closeOnError: false // Close the stream on error or just log it
+        }
+    }
+}
+
+var ai = new portAudio.AudioIO(audio_in_options);
+var ao = new portAudio.AudioIO(audio_out_options);
+
+// flowing mode asociando al evento data ---------------------------------------
+ai.on('data', onDataCallback);
+
+var pck_cnt = 0;
 function onDataCallback (buffer) {
     wsServer.clients.forEach(function each(client) {
         if (client.readyState === ws.OPEN) {
             if (single_client_play)
             {
                 client.send(buffer);
-                console.log('pkt: ' + pck_cnt + ' size: ' + buffer.length);
+                console.log('pkt: ' + pck_cnt + ' size: ' + buffer.length  + ' t: ' + buffer.timestamp);
             }
             else
                 console.log('flushed portaudio size: ' + buffer.length);
@@ -420,44 +456,19 @@ function onDataCallback (buffer) {
     pck_cnt++;
 };
 
-aio.start();
+var start_ao = false;
+function onRxSamples (buffer) {
+    if (!start_ao) {
+        ao.start();
+        start_ao = true;
+    }
+    
+    if (ao) {
+        ao.write(buffer);
+    }
+}
 
-
-// Audio with naudiodon (using Streams ) ---------------------------------------
-// Create an instance of AudioIO with outOptions (defaults are as below), which will return a WritableStream
-// var ao = new portAudio.AudioIO({
-//   outOptions: {
-//     channelCount: 1,
-//     sampleFormat: portAudio.SampleFormat16Bit,
-//     sampleRate: 44100,
-//     deviceId: -1, // Use -1 or omit the deviceId to select the default device
-//     closeOnError: true // Close the stream if an audio error is detected, if set false then just log the error
-//   }
-// });
-
-// var rs = fs.createReadStream('../hernandez.wav');
-
-// // Start piping data and start streaming
-// rs.pipe(ao);
-// ao.start();
-
-// Create an instance of AudioIO with inOptions and outOptions, which will return a DuplexStream
-// var ai = new portAudio.AudioIO({
-//   inOptions: {
-//     channelCount: 1,
-//     sampleFormat: portAudio.SampleFormat16Bit,
-//     sampleRate: 44100,
-//     deviceId: -1 // Use -1 or omit the deviceId to select the default device
-//   },
-//   outOptions: {
-//     channelCount: 2,
-//     sampleFormat: portAudio.SampleFormat16Bit,
-//     sampleRate: 44100,
-//     deviceId: -1 // Use -1 or omit the deviceId to select the default device
-//   }
-// });
-
-// aio.start();
+ai.start();
 
 
 // Check for ws connections still alive ----------------------------------------
