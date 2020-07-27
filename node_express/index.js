@@ -189,7 +189,8 @@ gpios.Bit1_Off();
 gpios.Bit2_Off();    
 
 //prender radio
-gpios.OnOff_On();
+// gpios.OnOff_On();
+gpios.OnOff_Cycle_On();
 
 // `server` is a vanilla Node.js HTTP server, so use
 // the same ws upgrade process described here:
@@ -244,54 +245,18 @@ function stop_sending_harcoded_audio () {
 var single_client_play = false;
 function start_sending_audio () {
     single_client_play = true;
-    
-    // if (ai.isPaused())
-    // {
-    //     if (ai.readableFlowing === null)
-    //         console.log('ai on null flowing - no mechanism for consuming the streams data is provided');
-    //     else if (ai.readableFlowing === false)
-    //         console.log('ai on pause - temporarily halting the flowing of events but not halting the generation of data');
-    //     else if (ai.readableFlowing === true)
-    //         console.log('ai on true flowing -  actively emitting events as data is generated');
-
-    //     while (null !== (chunk = ai.read())) {
-    //         console.log(`flushing stream ${chunk.length} bytes of data.`);
-    //     }
-    //     // do {
-    //     //     var chunk_flush = ai.read();
-    //     //     console.log(`flushing stream ${chunk_flush.length} bytes of data.`);
-    //     // } while (chunk_flush != null);
-
-    //     console.log('continue');
-    //     ai.addListener('data', onDataCallback);
-    //     ai.resume();
-    // }
-    // else
-    // {
-    //     ai.start();
-    // }
 }
 
 function stop_sending_audio () {
     single_client_play = false;
-    // try {
-    //     // ai.quit();
-    //     ai.pause();
-    //     ai.removeListener('data', onDataCallback);
-    //     // ai.removeAllListener();
-    // }
-    // catch {
-    // }
 }
 
 // Timed harcoded signal data --------------------------------------------------
-// var buffer = new Int16Array(size);
-// // var buffer = new Buffer(size);
-// const freq = 400;
-// const amplitude = 32767;
-
+// var harcodedbuffer = new Int16Array(size);
+// var buffer = new Buffer(size);
+const freq = 400;
+const amplitude = 32767;
 function create_buffer_int16 (samples, frequency, sampleRate) {
-    const amplitude = 32767;
     var buf = new Int16Array(samples);
     for (var i = 0; i < buf.length; i++) {
         buf[i] = amplitude * Math.sin(6.28 * frequency * i / sampleRate);
@@ -457,6 +422,7 @@ function onDataCallback (buffer) {
 };
 
 var start_ao = false;
+const buffer_harcoded = create_buffer_int16(16378, 400, 44100);
 function onRxSamples (buffer) {
     if (!start_ao) {
         ao.start();
@@ -464,7 +430,8 @@ function onRxSamples (buffer) {
     }
     
     if (ao) {
-        ao.write(buffer);
+        ao.write(buffer_harcoded);
+        // ao.write(buffer);
     }
 }
 
@@ -498,5 +465,11 @@ const interval = setInterval(function ping() {
 process.on('SIGINT', function() {
     console.log("Caught interrupt signal, closing");
     gpios.OnOff_Off();
+    gpios.LedBlueOff();
+    gpios.Ptt_Off();
+    gpios.Bit0_Off();
+    gpios.Bit1_Off();
+    gpios.Bit2_Off();    
+
     process.exit();
 });

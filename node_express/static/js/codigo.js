@@ -405,8 +405,8 @@ function createOscillator () {
     }
 }
 
-// get permission to use mic
-window.navigator.getUserMedia({ audio:true }, (stream) => {
+
+navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
     const audioContext = new AudioContext();
     // get mic stream
     const source = audioContext.createMediaStreamSource( stream );
@@ -435,8 +435,44 @@ window.navigator.getUserMedia({ audio:true }, (stream) => {
             socket.bufferType = "arraybuffer";
             socket.send(buffer);
         }
-    };
-}, console.log);
+    }
+}).catch(function(err) {
+    console.log("Error on getUserMedia: " + err);
+});
+
+
+// get permission to use mic
+// window.navigator.getUserMedia({ audio:true }, (stream) => {
+//     const audioContext = new AudioContext();
+//     // get mic stream
+//     const source = audioContext.createMediaStreamSource( stream );
+//     // const scriptNode = audioContext.createScriptProcessor(4096, 1, 1);
+//     const scriptNode = audioContext.createScriptProcessor(16384, 1, 1);    
+//     source.connect(scriptNode);
+//     scriptNode.connect(audioContext.destination);
+//     // output to speaker
+//     // source.connect(audioContext.destination);
+
+//     // on process event
+//     scriptNode.onaudioprocess = (e) => {
+//         // get mica data        
+//         // console.log(e.inputBuffer.getChannelData(0))
+//         if (send_mic_audio) {
+//             var inputChannel = e.inputBuffer.getChannelData(0);
+//             var inputChannel_len = inputChannel.length;
+//             console.log('mic input: ' + typeof inputChannel + ' mic size: ' + inputChannel_len);
+//             var buffer = new ArrayBuffer (inputChannel_len * Int16Array.BYTES_PER_ELEMENT);
+//             var view_buffer = new Int16Array (buffer);
+//             for (var i = 0; i < inputChannel_len; i++) {
+//                 view_buffer[i] = inputChannel[i] * 32767;
+//             }
+//             console.log('send: ' + typeof buffer +
+//                         ' size: ' + buffer.byteLength);
+//             socket.bufferType = "arraybuffer";
+//             socket.send(buffer);
+//         }
+//     };
+// }, console.log);
 
 
 
