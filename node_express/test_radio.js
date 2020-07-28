@@ -15,10 +15,6 @@ function InitialValues () {
     gpios.Bit2_Off();    
 }
 
-function TestCycle () {
-    gpios.OnOff_Cycle_On();
-}
-
 
 const freq = 400;
 const amplitude = 32767;
@@ -80,10 +76,19 @@ let timerId = setInterval(() => {
     ao.write(buffer_harcoded);
     console.log(`buffer length: ${buffer_harcoded.length} pck_cnt: ${pck_cnt}`);
     pck_cnt++;
-    
 }, (chunk_time_ms - 10));
 
-ao.start();
+// ao.start();
+
+
+async function powerUpCycle () {
+    await gpios.OnOff_Off();
+    await delay(5000);
+    await gpios.OnOff_On();
+    await delay(15000);
+    await console.log('radio must be ready now!');
+}
+
 
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -91,7 +96,9 @@ function delay(ms) {
 
 
 async function test2Cycles () {
+    await powerUpCycle();
     await console.log('first cycle');
+    await ao.start();
     await gpios.Ptt_On();
     await delay(5000);
     await gpios.Ptt_Off();
@@ -113,5 +120,6 @@ async function test2Cycles () {
 ////////////////
 console.log('TEST RADIO 2 PTT of 5 secs');
 InitialValues();
+// powerUpCycle();
 test2Cycles();
 

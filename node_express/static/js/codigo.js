@@ -295,12 +295,19 @@ socket.onmessage = e => {
             var json_msg = JSON.parse(event.data);
             if (json_msg.tabla != undefined)
             {
-                var a_tabla = '[{' +
-                    '\"nombre\": ' + '\"' + json_msg.nombre + '\",' +
-                    '\"comentario\": ' + '\"' + json_msg.comentario + '\",' +
-                    '\"status\": ' + '\"' + json_msg.status + '\"}]';
-                console.log(a_tabla);
-                insert_wrapper(a_tabla);
+                var a_tabla = json_msg.data;
+                var lines = '[';
+                a_tabla.forEach(obj => {
+                    // console.log(obj)
+                    lines += '{\"nombre\": ' + '\"' + obj.nombre + '\",' +
+                    '\"comentario\": ' + '\"' + obj.comentario + '\",' +
+                    '\"status\": ' + '\"' + obj.status + '\"},';
+                });
+
+                lines = lines.substring(0, lines.length - 1);
+                lines += ']';
+                console.log(lines);
+                insert_wrapper(lines);
             }
             else if (json_msg.boton_canal != undefined)
             {
