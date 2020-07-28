@@ -85,35 +85,33 @@ let timerId = setInterval(() => {
 
 ao.start();
 
-
-function TestModulation () {
-    (async () => {
-        await gpios.Ptt_On();
-        await setTimeout(() => {
-            gpios.Ptt_Off();
-            console.log('ptt and modulation finished');
-        }, 5000);
-        await setTimeout(() => {
-            console.log('cycle in off');
-        }, 20000);
-
-    })();
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+
+async function test2Cycles () {
+    await console.log('first cycle');
+    await gpios.Ptt_On();
+    await delay(5000);
+    await gpios.Ptt_Off();
+    await console.log('first cycle resting');
+    await delay(5000);
+    await console.log('second cycle');
+    await gpios.Ptt_On();
+    await delay(5000);
+    await gpios.Ptt_Off();
+    await console.log('second cycle resting');
+    await delay(5000);
+    await ao.quit();
+    await delay(1000);
+    process.exit();
+}
+
 ////////////////
 // Main Tests //
 ////////////////
 console.log('TEST RADIO 2 PTT of 5 secs');
 InitialValues();
-
-// (async () => {    
-//     await console.log('cycling power on radio');
-//     await TestCycle();
-//     await setTimeout(() => {
-//         console.log('change freq channel');
-//         }, 20000);
-//     await gpios.ChannelToGpios('12');
-//     await TestModulation();
-//     await TestModulation();
-// })();
-TestModulation();
+test2Cycles();
 
