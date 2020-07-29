@@ -111,6 +111,11 @@ wsServer.on('connection', (socket, req) => {
                 if (json_msg.botones != undefined) {
                     console.log('user: ' + uname + ' botones: ' + json_msg.botones);
 
+                    var json_res = JSON.stringify({"boton_canal" : json_msg.botones});
+                    // console.log('sended: ' + json_res);
+                    // socketSendBroadcast(json_res);
+                    socketSendBroadcastNoSelf(socket, json_res);
+
                     //Tx messages
                     var json_entry = {
                         "nombre":uname,
@@ -118,13 +123,14 @@ wsServer.on('connection', (socket, req) => {
                         "status":"1"
                     };
 
-                    var json_res = {
+                    json_res = {
                         "tabla" : "undef",
                         "data": tableAdd(json_entry)
                     };
                     
-                    console.log(json_res);
-                    socket.send(JSON.stringify(json_res));
+                    // console.log(json_res);
+                    // socket.send(JSON.stringify(json_res));
+                    socketSendBroadcast(JSON.stringify(json_res));
                     // socket.send(json_msg);
                     //prueba envio binario
                     // var bin = new Float32Array(5);
@@ -158,7 +164,25 @@ wsServer.on('connection', (socket, req) => {
                     //Tx message
                     var json_res = JSON.stringify({"boton_canal" : "81"});
                     console.log('sended: ' + json_res);
+                    // socketSendBroadcast(json_res);
                     socket.send((json_res));
+
+                    //Tx messages
+                    var json_entry = {
+                        "nombre":uname,
+                        "comentario":"now connected",
+                        "status":"1"
+                    };
+
+                    json_res = {
+                        "tabla" : "undef",
+                        "data": tableAdd(json_entry)
+                    };
+                    
+                    // console.log(json_res);
+                    // socket.send(JSON.stringify(json_res));
+                    socketSendBroadcast(JSON.stringify(json_res));
+                    
                 }
                 else {
                     console.log('no handler for this data');
@@ -235,6 +259,21 @@ function copySets (dest, orig) {
         dest.add(element);
     });
 }
+
+function socketSendBroadcast (msg) {
+    wsServer.clients.forEach(s => {
+        s.send(msg);
+    });
+}
+
+function socketSendBroadcastNoSelf (current_sk, msg) {
+    wsServer.clients.forEach(s => {
+        if (s != current_sk)
+            s.send(msg);
+    });
+}
+
+
 
 // `server` is a vanilla Node.js HTTP server, so use
 // the same ws upgrade process described here:

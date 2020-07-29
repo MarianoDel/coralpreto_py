@@ -138,18 +138,22 @@ for (var i = 0; i < btns.length; i++) {
 
 
 
-
 function cambiaBoton (canal) {
-	_c('puto');
-	for (var i = 0; i < aFrecuencias.length; i++) {
+    _c('puto');
+    for (var i = 0; i < aFrecuencias.length; i++) {
 
-		if (btns[i].getAttribute('data-channel') == canal) {
-			_c(aFrecuencias[i].id);
-			_c(aFrecuencias[i].tx);
-			_c(aFrecuencias[i].rx);
-			btns[i].className += " activo";
-		}
-	}
+        if (btns[i].getAttribute('data-channel') == canal) {
+            _c(aFrecuencias[i].id);
+            _c(aFrecuencias[i].tx);
+            _c(aFrecuencias[i].rx);
+            btns[i].className += " activo";
+            span1.innerHTML = aFrecuencias[i].tx;
+            span2.innerHTML = aFrecuencias[i].rx;
+            span3.innerHTML = canal;
+        } else {
+            btns[i].setAttribute('class','botones');
+        }
+    }
 }
 
 cambiaBoton(boton_seleccionado);
@@ -297,11 +301,19 @@ socket.onmessage = e => {
             {
                 var a_tabla = json_msg.data;
                 var lines = '[';
+                var first_line = true;
                 a_tabla.forEach(obj => {
                     // console.log(obj)
-                    lines += '{\"nombre\": ' + '\"' + obj.nombre + '\",' +
-                    '\"comentario\": ' + '\"' + obj.comentario + '\",' +
-                    '\"status\": ' + '\"' + obj.status + '\"},';
+                    if (first_line) {
+                        lines += '{\"nombre\": ' + '\"' + obj.nombre + '\",' +
+                            '\"comentario\": ' + '\"' + obj.comentario + '\",' +
+                            '\"status\": ' + '\"' + obj.status + '\"},';
+                        first_line = false;
+                    } else {
+                        lines += '{\"nombre\": ' + '\"' + obj.nombre + '\",' +
+                            '\"comentario\": ' + '\"' + obj.comentario + '\",' +
+                            '\"status\": \"0\"},';
+                    }
                 });
 
                 lines = lines.substring(0, lines.length - 1);
@@ -313,6 +325,7 @@ socket.onmessage = e => {
             {
                 console.log("boton_canal: " + json_msg.boton_canal);
                 cambiaBoton(json_msg.boton_canal);
+                // cambiaBoton('72');                
             }
         }
         catch {
