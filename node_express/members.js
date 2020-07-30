@@ -3,10 +3,8 @@ const fs = require('fs');
 let rawdata = fs.readFileSync('members.json');
 let members = JSON.parse(rawdata);
 
-console.log(members);
 
-
-function membersIsMember (uname) {
+function isMember (uname) {
     let answer = false;
     
     members.forEach(element => {
@@ -18,7 +16,7 @@ function membersIsMember (uname) {
 }
 
 
-function membersCheckUnamePsw (uname, psw) {
+function checkUserPass (uname, psw) {
     let answer = false;
     
     members.forEach(element => {
@@ -32,7 +30,7 @@ function membersCheckUnamePsw (uname, psw) {
 }
 
 
-function membersIsManager (uname) {
+function isManager (uname) {
     let answer = false;
     
     members.forEach(element => {
@@ -46,10 +44,10 @@ function membersIsManager (uname) {
 }
 
 
-function membersAddMember (uname, psw, manager = 'false') {
+function addMember (uname, psw, manager = 'false') {
     let answer = false;
     
-    if (!membersIsMember(uname)) {
+    if (!isMember(uname)) {
         let json_entry = {
             "name": uname,
             "password": psw,
@@ -64,10 +62,10 @@ function membersAddMember (uname, psw, manager = 'false') {
 }
 
 
-function membersDelMember (uname) {
+function delMember (uname) {
     let answer = false;
     
-    if (membersIsMember(uname)) {
+    if (isMember(uname)) {
         let array_index = 0;
         let index = 0;        
         
@@ -85,13 +83,24 @@ function membersDelMember (uname) {
 }
 
 
-function membersShowMembers () {
+function showMembers () {
     console.log(members);    
 }
 
 
-module.exports.membersCheckUnamePsw = membersCheckUnamePsw;
-module.exports.membersIsManager = membersIsManager;
-module.exports.membersAddMember = membersAddMember;
-module.exports.membersDelMember = membersDelMember;
-module.exports.membersShowMembers = membersShowMembers;
+function saveMembersArray () {
+    fs.writeFileSync('members.json', JSON.stringify(members));
+}
+
+// function loadMembersArray () {
+//     let rawdata = fs.readFileSync('members.json');
+//     let m = JSON.parse(rawdata);
+//     return m;
+// }
+
+module.exports.checkUserPass = checkUserPass;
+module.exports.isManager = isManager;
+module.exports.addMember = addMember;
+module.exports.delMember = delMember;
+module.exports.showMembers = showMembers;
+module.exports.saveMembersArray = saveMembersArray;

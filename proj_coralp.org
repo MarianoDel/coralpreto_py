@@ -204,3 +204,15 @@
 *** O por lo menos emitir desde IO quien hizo el ultimo cambio
 ** Mover canales con botones
 ** Seguir probando buffers Play/Pause
+
+* getUserMedia()
+  - no funciona en los browser sino es https la pagina, o no esta en localhost
+
+** para firefox about:config
+   buscar insecure
+   media.devices.insecure.enabled -> true
+   media.getusermedia.insecure.enables -> true
+
+
+
+    

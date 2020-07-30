@@ -3,21 +3,22 @@ const members = require('./members');
 ////////////////
 // Main Tests //
 ////////////////
-members.membersShowMembers();
+
+members.showMembers();
 
 console.log('add new member juan');
-if (members.membersAddMember('juan', 'gil')) {
+if (members.addMember('juan', 'gil')) {
     console.log('add ok');
 } else {
     console.log('something went wrong in add');
 }
 
 console.log('\nnow\n');
-members.membersShowMembers();
+members.showMembers();
 
 
 console.log('del member admin');
-if (members.membersDelMember('admin')) {
+if (members.delMember('admin')) {
     console.log('del ok');
 } else {
     console.log('something went wrong in del');
@@ -25,32 +26,32 @@ if (members.membersDelMember('admin')) {
 
 
 console.log('\nnow\n');
-members.membersShowMembers();
+members.showMembers();
 
 
 console.log('check if miguel is manager');
-if (members.membersIsManager('miguel')) {
+if (members.isManager('miguel')) {
     console.log('YES');
 } else {
     console.log('NO');
 }
 
 console.log('check if admin is manager');
-if (members.membersIsManager('admin')) {
+if (members.isManager('admin')) {
     console.log('YES');
 } else {
     console.log('NO');
 }
 
 console.log('check if maxi is manager');
-if (members.membersIsManager('maxi')) {
+if (members.isManager('maxi')) {
     console.log('YES');
 } else {
     console.log('NO');
 }
 
 console.log('check if juan is manager');
-if (members.membersIsManager('juan')) {
+if (members.isManager('juan')) {
     console.log('YES');
 } else {
     console.log('NO');
@@ -58,26 +59,28 @@ if (members.membersIsManager('juan')) {
 
 
 console.log('check maxi password');
-if (members.membersCheckUnamePsw('maxi', 'maxi')) {
+if (members.checkUserPass('maxi', 'maxi')) {
     console.log('YES psw good');
 } else {
     console.log('NO wrong psw');
 }
 
 console.log('check admin password');
-if (members.membersCheckUnamePsw('admin', 'admin')) {
+if (members.checkUserPass('admin', 'admin')) {
     console.log('YES psw good');
 } else {
     console.log('NO wrong psw');
 }
 
 console.log('check maxi wrong password');
-if (members.membersCheckUnamePsw('maxi', 'mxai')) {
+if (members.checkUserPass('maxi', 'mxai')) {
     console.log('YES psw good');
 } else {
     console.log('NO wrong psw');
 }
 
+console.log('save the array');
+members.saveMembersArray();
 
 
 
