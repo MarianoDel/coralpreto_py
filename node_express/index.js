@@ -36,14 +36,11 @@ app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname + '/static/login.html'));
 });
 
-app.post('/login', urlencodedParser, (req, res) => {
+app.post(['/login', 'login.html'], urlencodedParser, (req, res) => {
     var username = req.body.uname;
     var password = req.body.psw;
-    console.log('uname: ' + username + ' psw: ' + password);
-    if ((username == 'admin' && password == 'admin') ||
-        (username == 'maxi' && password == 'maxi') ||
-        (username == 'med' && password == 'med')) {
-        // res.send('<h1>Logged IN!</h1>');
+
+    if (members.checkUserPass(username, password)) {
         res.redirect('/registrado');
     }
     else {
@@ -51,25 +48,12 @@ app.post('/login', urlencodedParser, (req, res) => {
     }
 });
 
-app.post('/login.html', urlencodedParser, (req, res) => {
-    var username = req.body.uname;
-    var password = req.body.psw;
-    console.log('uname: ' + username + ' psw: ' + password);
-    if ((username == 'admin' && password == 'admin') ||
-        (username == 'maxi' && password == 'maxi') ||
-        (username == 'med' && password == 'med')) {
-        // res.send('<h1>Logged IN!</h1>');
-        res.redirect('/registrado');
-    }
-    else {
-        res.redirect('/no_login');
-    }
-});
 
 app.get('/registrado', (req, res) => {
     // res.sendFile('/home/med/Documents/Projects/CoralPetro/node_express/static/login.html');
     res.sendFile(path.join(__dirname + '/static/registrado.html'));
 });
+
 
 app.get('/no_login', (req, res) => {
     res.sendFile(path.join(__dirname + '/static/no-login.html'));

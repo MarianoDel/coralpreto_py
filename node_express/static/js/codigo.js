@@ -264,7 +264,12 @@ function insert_wrapper (json_txt) {
 
 
 // Con websocket
-const socket = new WebSocket('ws://' + document.domain + ':' + location.port);
+var socket;
+if (location.protocol !== 'https:') {
+    socket = new WebSocket('ws://' + document.domain + ':' + location.port);
+} else {
+    socket = new WebSocket('wss://' + document.domain + ':' + location.port);
+}
 
 socket.onopen = () => {
     var json_msg = JSON.stringify({"ws_open" : "client"});
