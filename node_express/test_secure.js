@@ -6,6 +6,7 @@ const fs = require('fs');
 var bodyParser = require('body-parser');
 var path = require('path');
 const members = require('./members');
+const sku = require('./socket_utils');
 
 const app = express();
 
@@ -24,8 +25,9 @@ var urlencodedParser = bodyParser.urlencoded({ extended: false })
 app.all('*', ensureSecure); // at top of routing calls
 
 function ensureSecure(req, res, next){
-    if(req.secure){
-        // OK, continue
+    if ((req.secure) && (req.hostname == secure_hostname)) {
+        // req is secure and to proper hostname
+        // console.log('ensure secure: ' + req.secure + ' to host: ' + req.hostname);
         return next();
     };
     // handle port numbers if you need non defaults
@@ -47,12 +49,16 @@ app.get('/login', (req, res) => {
 });
 
 
+var mySocketsBkp = new Set();
+var myClientArray = [];
+var last_username = "";
 app.post(['/login', '/login.html'], urlencodedParser, (req, res) => {
     var username = req.body.uname;
     var password = req.body.psw;
 
     if (members.checkUserPass(username, password)) {
         res.redirect('/registrado');
+        last_username = username;
     }
     else {
         res.redirect('/no_login');
@@ -86,7 +92,6 @@ const wsServer = new ws.Server({ noServer: true });
 wsServer.on('connection', (socket, req) => {
     //keep alive msg
     socket.isAlive = true;
-    socket.on('pong', heartbeat);
     socket.binaryType = "arraybuffer";
     
     //Rx messages
@@ -103,7 +108,7 @@ wsServer.on('connection', (socket, req) => {
         else if (typeof message === "string")
         {
             console.log('msg: ' + message + ' msg len: ' + message.length);
-            let socket_index = getSocketIndex(socket, wsServer.clients);
+            let socket_index = sku.getSocketIndex(socket, wsServer.clients);
             let uname = myClientArray[socket_index].client;
 
             try {
@@ -115,7 +120,7 @@ wsServer.on('connection', (socket, req) => {
                     var json_res = JSON.stringify({"boton_canal" : json_msg.botones});
                     // console.log('sended: ' + json_res);
                     // socketSendBroadcast(json_res);
-                    socketSendBroadcastNoSelf(socket, json_res);
+                    sku.socketSendBroadcastNoSelf(json_res, socket, wsServer.clients);
 
                     //Tx messages
                     var json_entry = {
@@ -131,7 +136,7 @@ wsServer.on('connection', (socket, req) => {
                     
                     // console.log(json_res);
                     // socket.send(JSON.stringify(json_res));
-                    socketSendBroadcast(JSON.stringify(json_res));
+                    sku.socketSendBroadcast(JSON.stringify(json_res), wsServer.clients);
                     // socket.send(json_msg);
                     //prueba envio binario
                     // var bin = new Float32Array(5);
@@ -182,7 +187,7 @@ wsServer.on('connection', (socket, req) => {
                     
                     // console.log(json_res);
                     // socket.send(JSON.stringify(json_res));
-                    socketSendBroadcast(JSON.stringify(json_res));
+                    sku.socketSendBroadcast(JSON.stringify(json_res), wsServer.clients);
                     
                 }
                 else {
@@ -203,7 +208,7 @@ wsServer.on('connection', (socket, req) => {
         console.log('disconnect client close');
 
         //busco la posicion del set, quito ese cliente
-        let lost = getSocketLostIndex(wsServer.clients, mySocketsBkp);
+        let lost = sku.getSocketLostIndex(wsServer.clients, mySocketsBkp, myClientArray);
     });
 });
 
@@ -230,75 +235,22 @@ secure_server.on('upgrade', (request, socket, head) => {
         last_username = "";
 
         //cada vez que tengo nueva conexion hago un bkp del set de ws
-        copySets(mySocketsBkp, wsServer.clients);
-
+        sku.copySets(mySocketsBkp, wsServer.clients);
         wsServer.emit('connection', socket, request);
     });
 });
 
 
-function getSocketIndex (sk_this, sklist) {
-    let sk_index = 0;
-    let sk_finded = 0;
-    sklist.forEach(element => {
-        if (sk_this == element) {
-            sk_finded = sk_index;
-        }
-        sk_index++;
-    });
+// Table logger --------------------------------------------------------------
+var table_json = [];
 
-    return sk_finded;
+function tableAdd (json_msg) {
+    let length = table_json.unshift(json_msg);
+    if (length > 4)
+        table_json.splice(4, length - 4);
+
+    return table_json;
 }
 
-function getUserNameBySocket (sk, sklist) {
-    let uname = "";
-    let index = 0;
 
-    index = getSocketIndex(sk, sklist);
-    uname = myClientArray[index].client;
 
-    return uname;
-}
-
-function getSocketLostIndex (sklist, sklist_bkp) {
-    let sk_index = 0;
-    let sk_lost_finded = 0;
-    let current_qtty = sklist.size;
-    let bkp_qtty = sklist_bkp.size;
-    console.log('actual ws: ' + current_qtty +
-                ' bkp ws: ' + bkp_qtty);
-    sklist_bkp.forEach(element => {
-        if (!sklist.has(element)) {
-            sk_lost_finded = sk_index;
-        }
-        sk_index++;
-    });
-    console.log('lost finded on: ' + sk_lost_finded +
-                ' user: ' + myClientArray[sk_lost_finded].client +
-                ' disconnected');
-    myClientArray.splice(sk_lost_finded, 1);
-    console.log(myClientArray);
-    copySets(mySocketsBkp, sklist);
-}
-
-function copySets (dest, orig) {
-    let q_orig = orig.size;
-    dest.clear();
-    
-    orig.forEach(element => {
-        dest.add(element);
-    });
-}
-
-function socketSendBroadcast (msg) {
-    wsServer.clients.forEach(s => {
-        s.send(msg);
-    });
-}
-
-function socketSendBroadcastNoSelf (current_sk, msg) {
-    wsServer.clients.forEach(s => {
-        if (s != current_sk)
-            s.send(msg);
-    });
-}

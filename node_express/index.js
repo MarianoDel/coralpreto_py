@@ -1,29 +1,60 @@
 const express = require('express');
+const http = require('http');
+const https = require('https');
 const ws = require('ws');
-const members = require('./members');
-const gpios = require('./gpios');
 var bodyParser = require('body-parser');
 var path = require('path');
 const portAudio = require('naudiodon');
 const fs = require('fs');
 
-const app = express();
-const port = 3000;
+const members = require('./members');
+const gpios = require('./gpios');
+const sku = require('./socket_utils');
 
+const app = express();
+
+
+// First configs ---------------------------------------------------------------
 const running_on_slackware = true;
 const running_on_raspbian = !running_on_slackware;
+
+const secure_hostname = '192.168.0.16';
+const port = 3000;
+const secure_port = 3443;
+
+var privateKey  = fs.readFileSync('./self_signed_cert/server.key');
+var certificate = fs.readFileSync('./self_signed_cert/server.cert')
+var credentials = {key: privateKey, cert: certificate};
+
+
+
 // Middleware functions --------------------------------------------------------
 // create application/json parser
 var jsonParser = bodyParser.json()
 // create application/x-www-form-urlencoded parser
 var urlencodedParser = bodyParser.urlencoded({ extended: false })
 
-function checkAuth(req, res, next) {
-  if (!req.session.user_id) {
-    res.send('You are not authorized to view this page');
-  } else {
-    next();
-  }
+// function checkAuth(req, res, next) {
+//   if (!req.session.user_id) {
+//     res.send('You are not authorized to view this page');
+//   } else {
+//     next();
+//   }
+// }
+
+app.all('*', ensureSecure); // at top of routing calls
+
+function ensureSecure(req, res, next){
+    if ((req.secure) && (req.hostname == secure_hostname)) {
+        // req is secure and to proper hostname
+        // console.log('ensure secure: ' + req.secure + ' to host: ' + req.hostname);
+        return next();
+    };
+    // handle port numbers if you need non defaults
+    // let redirect = 'https://' + req.hostname + ':' + secure_port + req.url;
+    let redirect = 'https://' + secure_hostname + ':' + secure_port + req.url;    
+    console.log('redirected to: ' + redirect);
+    res.redirect(redirect); // express 4.x
 }
 
 // Routes ----------------------------------------------------------------------
@@ -36,12 +67,17 @@ app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname + '/static/login.html'));
 });
 
-app.post(['/login', 'login.html'], urlencodedParser, (req, res) => {
+
+var mySocketsBkp = new Set();
+var myClientArray = [];
+var last_username = "";
+app.post(['/login', '/login.html'], urlencodedParser, (req, res) => {
     var username = req.body.uname;
     var password = req.body.psw;
 
     if (members.checkUserPass(username, password)) {
         res.redirect('/registrado');
+        last_username = username;
     }
     else {
         res.redirect('/no_login');
@@ -63,8 +99,17 @@ app.get('/no_login', (req, res) => {
 app.use(express.static('./static'));
 
 
+// Activate servers ------------------------------------------------------------
+var httpServer = http.createServer(app);
+var httpsServer = https.createServer(credentials, app);
+
+httpServer.listen(port, () =>
+                  console.log('Server http started at port: ' + port));
+const secure_server = httpsServer.listen(secure_port, () =>
+                                         console.log('Server https started at port: ' + secure_port));
+
+
 // Websockets Server ----------------------------------------------------------
-// Set up a headless websocket server that prints any events that come in.
 const wsServer = new ws.Server({ noServer: true });
 wsServer.on('connection', (socket, req) => {
     //keep alive msg
@@ -89,56 +134,72 @@ wsServer.on('connection', (socket, req) => {
         else if (typeof message === "string")
         {
             console.log('msg: ' + message + ' msg len: ' + message.length);
+            let socket_index = sku.getSocketIndex(socket, wsServer.clients);
+            let uname = myClientArray[socket_index].client;
 
             try {
                 var json_msg = JSON.parse(message);
 
                 if (json_msg.botones != undefined) {
-                    console.log('botones: ' + json_msg.botones);
+                    console.log('user: ' + uname + ' botones: ' + json_msg.botones);
                     gpios.ChannelToGpios(json_msg.botones);
+                    
+                    var json_res = JSON.stringify({"boton_canal" : json_msg.botones});
+                    sku.socketSendBroadcastNoSelf(json_res, socket, wsServer.clients);
 
                     //Tx messages
-                    var json_res = {
-                        "tabla" : "undef",
-                        "nombre": "MED",
+                    var json_entry = {
+                        "nombre":uname,
                         "comentario":"changed to channel " + json_msg.botones,
-                        "status":"1" };
+                        "status":"1"
+                    };
+
+                    json_res = {
+                        "tabla" : "undef",
+                        "data": tableAdd(json_entry)
+                    };
                     
-                    // json_msg = "server msg";
-                    socket.send(JSON.stringify(json_res));
-                    // socket.send(json_msg);
-                    //prueba envio binario
-                    // var bin = new Float32Array(5);
-                    // bin[0] = 55.5;
-                    // bin[1] = 55.5;
-                    // bin[2] = 55.5;
-                    // bin[3] = 55.5;
-                    // bin[4] = 55.5;
-                    // socket.send(bin);
+                    sku.socketSendBroadcast(JSON.stringify(json_res), wsServer.clients);
+
                 }
                 else if (json_msg.ptt != undefined) {
-                    console.log('ptt: ' + json_msg.ptt);
+                    console.log('user: ' + uname + ' ptt: ' + json_msg.ptt);
                     if (json_msg.ptt == 'ON')
                         gpios.Ptt_On();
                     else
                         gpios.Ptt_Off();
                 }
                 else if (json_msg.audio != undefined) {
-                    console.log('audio: ' + json_msg.audio);
+                    console.log('user: ' + uname + ' audio: ' + json_msg.audio);
                     if (json_msg.audio == 'PLAY') {
                         start_sending_audio();
-                        // start_sending_harcoded_audio();
+                        myClientArray[socket_index].listen = true;
                     }
                     else {
                         stop_sending_audio();
-                        // stop_sending_harcoded_audio();
+                        myClientArray[socket_index].listen = false;
                     }
                 }
                 else if (json_msg.ws_open != undefined) {
+                    console.log('user: ' + uname + ' ws_open: ' + json_msg.ws_open);
+
                     //Tx message
                     var json_res = JSON.stringify({"boton_canal" : gpios.GpiosToChannel()});
                     console.log('sended: ' + json_res);
                     socket.send((json_res));
+
+                    //Tx messages
+                    var json_entry = {
+                        "nombre":uname,
+                        "comentario":"now connected",
+                        "status":"1"
+                    };
+
+                    json_res = {
+                        "tabla" : "undef",
+                        "data": tableAdd(json_entry)
+                    };
+                    sku.socketSendBroadcast(JSON.stringify(json_res), wsServer.clients);
                 }
                 else {
                     console.log('no handler for this data');
@@ -148,18 +209,40 @@ wsServer.on('connection', (socket, req) => {
                 console.error(error);
             }
         }
-        
-        // var obj = JSON.parse(message);
-        // var msg = obj.botones;
-        
     });
 
     socket.on('close', () => {
         console.log('disconnect client close');
-        // clearInterval(interval);
-        gpios.LedBlueBlinking_Off();
+
+        //busco la posicion del set, quito ese cliente
+        let lost = sku.getSocketLostIndex(wsServer.clients, mySocketsBkp, myClientArray);
+        let qtty = wsServer.clients.size;
+
+        if (!qtty) {
+            // clearInterval(interval);
+            gpios.LedBlueBlinking_Off();
+        }
     });
-    
+});
+
+
+secure_server.on('upgrade', (request, socket, head) => {
+    wsServer.handleUpgrade(request, socket, head, socket => {
+        // console.log('clients: ');
+        let qtty = wsServer.clients.size;
+        let client_index = sku.getSocketIndex(socket, wsServer.clients);
+
+        console.log('client match on: ' + client_index + ' last uname was: ' + last_username);
+        myClientArray[client_index] = {
+            client: last_username,
+            listen: false
+        }
+        last_username = "";
+
+        //cada vez que tengo nueva conexion hago un bkp del set de ws
+        sku.copySets(mySocketsBkp, wsServer.clients);
+        wsServer.emit('connection', socket, request);
+    });
 });
 
 
@@ -176,27 +259,16 @@ gpios.Bit2_Off();
 // gpios.OnOff_On();
 gpios.OnOff_Cycle_On();
 
-// `server` is a vanilla Node.js HTTP server, so use
-// the same ws upgrade process described here:
-// https://www.npmjs.com/package/ws#multiple-servers-sharing-a-single-https-server
-const server = app.listen(port, () => console.log(`Example app listening at http://localhost:${port}`));
-// app.listen(port, () => console.log(`Example app listening at http://localhost:${port}`));
 
-server.on('upgrade', (request, socket, head) => {
-    wsServer.handleUpgrade(request, socket, head, socket => {
-        // console.log('clients: ');
-        var client_num = 1;
-        wsServer.clients.forEach(element => {
-            console.log('cliente: ' + client_num);
-            console.log(element);
-            client_num++;
-        });
-        wsServer.emit('connection', socket, request);
-    });
-});
 
 // Timed harcoded signal data by websockets ------------------------------------
-var buffer_new = create_buffer_int16(44100, 400, 44100);
+const signal_opt = {
+    samples : 44100,
+    frequency : 400,
+    sampleRate : 44100,
+    amplitude : 32767
+}
+var buffer_new = create_buffer_int16(signal_opt);
 var chunk_time_ms = 1000;
 var pck_cnt = 0;
 
@@ -238,9 +310,15 @@ function stop_sending_audio () {
 // Timed harcoded signal data --------------------------------------------------
 // var harcodedbuffer = new Int16Array(size);
 // var buffer = new Buffer(size);
-const freq = 400;
-const amplitude = 32767;
-function create_buffer_int16 (samples, frequency, sampleRate) {
+function create_buffer_int16 (signal_options) {
+    console.log(signal_options);
+    let frequency = signal_options.frequency;
+    let samples = signal_options.samples;
+    let sampleRate = signal_options.sampleRate;
+    let amplitude = signal_options.amplitude;
+    console.log(`f: ${frequency} s: ${samples} sr: ${sampleRate} a: ${amplitude}`);
+
+    
     var buf = new Int16Array(samples);
     for (var i = 0; i < buf.length; i++) {
         buf[i] = amplitude * Math.sin(6.28 * frequency * i / sampleRate);
@@ -406,7 +484,13 @@ function onDataCallback (buffer) {
 };
 
 var start_ao = false;
-const buffer_harcoded = create_buffer_int16(16378, 400, 44100);
+const signal_opt2 = {
+    samples : 44100,
+    frequency : 400,
+    sampleRate : 44100,
+    amplitude : 32767
+}
+const buffer_harcoded = create_buffer_int16(signal_opt2);
 function onRxSamples (buffer) {
     if (!start_ao) {
         ao.start();
@@ -414,8 +498,8 @@ function onRxSamples (buffer) {
     }
     
     if (ao) {
-        ao.write(buffer_harcoded);
-        // ao.write(buffer);
+        // ao.write(buffer_harcoded);
+        ao.write(buffer);
     }
 }
 
@@ -443,6 +527,18 @@ const interval = setInterval(function ping() {
         socket.ping(noop);
     });
 }, 10000);
+
+
+// Table logger --------------------------------------------------------------
+var table_json = [];
+
+function tableAdd (json_msg) {
+    let length = table_json.unshift(json_msg);
+    if (length > 4)
+        table_json.splice(4, length - 4);
+
+    return table_json;
+}
 
 
 // catch exit signal -----------------------------------------------------------
