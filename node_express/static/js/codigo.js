@@ -262,6 +262,14 @@ function insert_wrapper (json_txt) {
     insert(json_txt);
 }
 
+// Insercion de Username
+var username = d.querySelector('.welcome span');
+
+function insertUser (usuario) {
+    username.innerHTML = usuario;
+}
+
+insertUser('MED');
 
 // Con websocket
 var socket;
@@ -332,6 +340,13 @@ socket.onmessage = e => {
                 cambiaBoton(json_msg.boton_canal);
                 // cambiaBoton('72');                
             }
+            else if (json_msg.show_uname != undefined)
+            {
+                console.log("username: " + json_msg.show_uname);
+                insertUser(json_msg.show_uname);
+
+            }
+            
         }
         catch {
         }

@@ -188,6 +188,11 @@ wsServer.on('connection', (socket, req) => {
                     console.log('sended: ' + json_res);
                     socket.send((json_res));
 
+                    //Tx message
+                    var json_res = JSON.stringify({"show_uname" : uname});
+                    console.log('sended: ' + json_res);
+                    socket.send((json_res));
+                    
                     //Tx messages
                     var json_entry = {
                         "nombre":uname,
