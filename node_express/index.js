@@ -18,7 +18,12 @@ const app = express();
 const running_on_slackware = true;
 const running_on_raspbian = !running_on_slackware;
 
-const secure_hostname = '192.168.0.16';
+var secure_hostname = "";
+if (running_on_slackware)
+    secure_hostname = '192.168.0.16';
+else
+    secure_hostname = '192.168.0.103';
+
 const port = 3000;
 const secure_port = 3443;
 
