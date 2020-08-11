@@ -80,7 +80,11 @@ app.post(['/login', '/login.html'], urlencodedParser, (req, res) => {
     var username = req.body.uname;
     var password = req.body.psw;
 
-    if (members.checkUserPass(username, password)) {
+    if (username == 'manager' && password == 'manager') {
+        res.redirect('/cpanel');
+        last_username = username;
+    }
+    else if (members.checkUserPass(username, password)) {
         res.redirect('/registrado');
         last_username = username;
     }
@@ -95,6 +99,9 @@ app.get('/registrado', (req, res) => {
     res.sendFile(path.join(__dirname + '/static/registrado.html'));
 });
 
+app.get('/cpanel', (req, res) => {
+    res.sendFile(path.join(__dirname + '/static/cpanel.html'));
+});
 
 app.get('/no_login', (req, res) => {
     res.sendFile(path.join(__dirname + '/static/no-login.html'));
@@ -188,29 +195,79 @@ wsServer.on('connection', (socket, req) => {
                 else if (json_msg.ws_open != undefined) {
                     console.log('user: ' + uname + ' ws_open: ' + json_msg.ws_open);
 
-                    //Tx message
-                    var json_res = JSON.stringify({"boton_canal" : gpios.GpiosToChannel()});
-                    console.log('sended: ' + json_res);
-                    socket.send((json_res));
+                    if (json_msg.ws_open == 'client') {
+                        if (members.isMember(uname)) {
+                            //Tx message
+                            var json_res = JSON.stringify({"boton_canal" : gpios.GpiosToChannel()});
+                            console.log('sended: ' + json_res);
+                            socket.send((json_res));
 
-                    //Tx message
-                    var json_res = JSON.stringify({"show_uname" : uname});
-                    console.log('sended: ' + json_res);
-                    socket.send((json_res));
-                    
-                    //Tx messages
-                    var json_entry = {
-                        "nombre":uname,
-                        "comentario":"now connected",
-                        "status":"1"
-                    };
+                            //Tx message
+                            json_res = JSON.stringify({"show_uname" : uname});
+                            console.log('sended: ' + json_res);
+                            socket.send((json_res));
+                            
+                            //Tx messages
+                            var json_entry = {
+                                "nombre":uname,
+                                "comentario":"now connected",
+                                "status":"1"
+                            };
 
-                    json_res = {
-                        "tabla" : "undef",
-                        "data": tableAdd(json_entry)
-                    };
-                    sku.socketSendBroadcast(JSON.stringify(json_res), wsServer.clients);
+                            json_res = {
+                                "tabla" : "undef",
+                                "data": tableAdd(json_entry)
+                            };
+                            sku.socketSendBroadcast(JSON.stringify(json_res), wsServer.clients);
+                        }
+                        else {
+                            var json_res = JSON.stringify({"redirect" : uname});
+                            console.log('sended: ' + json_res);
+                            socket.send((json_res));
+                        }
+                    }
+
+                    if (json_msg.ws_open == 'manager') {
+                        if (members.isManager(uname)) {
+
+                            var json_res = {
+                                "tabla" : "undef",
+                                "data": members.getMembersName()
+                            };
+
+                            //Tx message
+                            socket.send(JSON.stringify(json_res));
+                            
+                        }
+                        else {
+                            var json_res = JSON.stringify({"redirect" : uname});
+                            console.log('sended: ' + json_res);
+                            socket.send((json_res));
+                        }
+                    }
                 }
+                else if (json_msg.add_username != undefined) {
+                    console.log('add username: ' + json_msg.add_username);
+                    let uname = json_msg["add_username"]["username"];
+                    let pass =  json_msg["add_username"]["password"];
+
+                    console.log('uname: ' + uname + ' pass: ' + pass);
+                    if (members.addMember(uname, pass)) {
+                        console.log("agregado ok!");
+
+                        var json_res = {
+                            "tabla" : "undef",
+                            "data": members.getMembersName()
+                        };
+
+                        //Tx message
+                        socket.send(JSON.stringify(json_res));
+                    }
+                    else
+                        console.log("ese usuario ya existe!!!");
+                        
+                }
+
                 else {
                     console.log('no handler for this data');
                 }

@@ -88,6 +88,17 @@ function showMembers () {
 }
 
 
+function getMembersName () {
+    var resp = [];
+
+    members.forEach(element => {
+        resp.push(element.name);
+    });
+
+    return resp;
+    
+}
+
 function saveMembersArray () {
     fs.writeFileSync('members.json', JSON.stringify(members));
 }
@@ -100,7 +111,9 @@ function saveMembersArray () {
 
 module.exports.checkUserPass = checkUserPass;
 module.exports.isManager = isManager;
+module.exports.isMember = isMember;
 module.exports.addMember = addMember;
 module.exports.delMember = delMember;
+module.exports.getMembersName = getMembersName;
 module.exports.showMembers = showMembers;
 module.exports.saveMembersArray = saveMembersArray;

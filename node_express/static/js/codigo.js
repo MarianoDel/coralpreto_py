@@ -344,9 +344,12 @@ socket.onmessage = e => {
             {
                 console.log("username: " + json_msg.show_uname);
                 insertUser(json_msg.show_uname);
-
             }
-            
+            else if (json_msg.redirect != undefined)
+            {
+                console.log("username: " + json_msg.redirect + " not allowed here");
+                window.location.replace('/login');
+            }
         }
         catch {
         }
