@@ -65,7 +65,7 @@ function addMember (uname, psw, manager = 'false') {
 function delMember (uname) {
     let answer = false;
     
-    if (isMember(uname)) {
+    if ((isMember(uname)) && (!isManager(uname))){
         let array_index = 0;
         let index = 0;        
         

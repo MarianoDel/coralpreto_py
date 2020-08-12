@@ -254,8 +254,16 @@ wsServer.on('connection', (socket, req) => {
                     console.log('uname: ' + uname + ' pass: ' + pass);
                     if (members.addMember(uname, pass)) {
                         console.log("agregado ok!");
+                        members.saveMembersArray();
 
                         var json_res = {
+                            "new_user" : "inserted ok"
+                        };
+
+                        //Tx message
+                        socket.send(JSON.stringify(json_res));
+                        
+                        json_res = {
                             "tabla" : "undef",
                             "data": members.getMembersName()
                         };
@@ -263,11 +271,67 @@ wsServer.on('connection', (socket, req) => {
                         //Tx message
                         socket.send(JSON.stringify(json_res));
                     }
-                    else
+                    else {
                         console.log("ese usuario ya existe!!!");
-                        
-                }
 
+                        var json_res = {
+                            "new_user" : "not inserted"
+                        };
+
+                        //Tx message
+                        socket.send(JSON.stringify(json_res));
+                    }
+                }
+                else if (json_msg.del_username != undefined) {
+                    console.log('del username: ' + json_msg.del_username);
+
+                    if (members.delMember(json_msg.del_username)) {
+                        console.log("borrado ok!");
+                        members.saveMembersArray();
+
+                        var json_res = {
+                            "del_user" : "deleted ok"
+                        };
+
+                        //Tx message
+                        socket.send(JSON.stringify(json_res));
+                        
+                        json_res = {
+                            "tabla" : "undef",
+                            "data": members.getMembersName()
+                        };
+
+                        //Tx message
+                        socket.send(JSON.stringify(json_res));
+                    }
+                    else {
+                        console.log("el usuario a borrar no existe!!!");
+
+                        var json_res = {
+                            "del_user" : "not deleted"
+                        };
+
+                        //Tx message
+                        socket.send(JSON.stringify(json_res));
+                    }
+                }
+                else if (json_msg.powercycle != undefined) {
+                    if (json_msg.powercycle == 'RADIO') {
+                        console.log('stop and start the radio');
+                        gpios.OnOff_Cycle_On();
+                    }
+                    else if (json_msg.powercycle == 'SERVER') {
+                        console.log('Rebooting the server!!!');
+                    }
+                }
+                else if (json_msg.server_port != undefined) {
+                    if (json_msg.server_port == 'OPEN') {
+                        console.log('Openning 22 port!!!');
+                    }
+                    else if (json_msg.server_port == 'CLOSE') {
+                        console.log('Closing 22 port!!!');
+                    }
+                }
                 else {
                     console.log('no handler for this data');
                 }

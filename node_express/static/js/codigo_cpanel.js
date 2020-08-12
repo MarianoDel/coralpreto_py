@@ -20,6 +20,7 @@ function insert2(txt) {
 	
 	boton_1.setAttribute('class','tabla_botones');
 	boton_1.setAttribute('data-id',i);
+	boton_1.setAttribute('data-name',aUsers[i].nombre);
 	boton_1.onclick = SacarUsuario;
 	td_2.setAttribute('class','wrap_edit_delete');
 	
@@ -33,32 +34,53 @@ function insert2(txt) {
 	function SacarUsuario () {
 	    d.querySelector('#usuarios_cpanel').removeChild(this.parentNode.parentNode);
 	    var id = this.getAttribute('data-id');
-	    _c(id);
-	    Remover(id);
+            var name = this.getAttribute('data-name');
+	    _c(id, name);
+	    Remover(id, name);
 	}
     }
 }
 
 insert2(txt2);
 
-function Remover (pos) {
-	var aUsers = JSON.parse(txt2);
-	aUsers.splice(pos,1);
-	_c(aUsers);
-	var myJSON = JSON.stringify(aUsers);
-	txt2 = myJSON;
-	// insert2(txt2);
+//al final del archivo
+// function Remover (pos, nombre) {
+// 	var aUsers = JSON.parse(txt2);
+// 	aUsers.splice(pos,1);
+// 	_c("esto es remover a: " + aUsers + " con nombre: " + nombre);
+// 	var myJSON = JSON.stringify(aUsers);
+// 	txt2 = myJSON;
+
+// }
+
+var user_deleted = d.querySelector('.user_deleted');
+
+function ShowMessage (e) {
+    if (e==1) {
+	user_deleted.innerHTML = '* The user was erased successfully';
+	user_deleted.setAttribute('class','already_register green');
+    }
+    else {
+	user_deleted.innerHTML = '* Something went wrong!';
+	user_deleted.setAttribute('class','already_register red');
+    }
 }
+
 
 var fx1, fx2, fx3, fx4;
 
 var clock = d.querySelector('#count_down span');
 var clock_txt = d.querySelector('#count_down p');
 var clock_wrapper = d.querySelector('#count_down');
+var no_timmer = d.querySelectorAll('.botones_cpanel');
 
 function myFunctionBoton1 () {
+	for (var i = 0; i < no_timmer.length ; i++) {
+		no_timmer[i].className += " avoid_clicks";
+	}
+
 	clock_wrapper.style.display = 'flex';
-	clock_txt.innerHTML = 'Aguanta los 20 seg PUTITO'
+	clock_txt.innerHTML = 'Wait for 20 seconds'
 	clock.innerHTML = 20;
 	fx1 = setInterval(CountDown1, 1000);
 	function CountDown1 () {
@@ -69,16 +91,24 @@ function myFunctionBoton1 () {
 			fx2 = setInterval(Wait, 1000);
 		}
 	}
+    radioPowerCycle();
 }
 
 function Wait () {
+	for (var i = 0; i < no_timmer.length ; i++) {
+		no_timmer[i].className = no_timmer[i].className.replace(" avoid_clicks", "");
+	}
 	clock_wrapper.style.display = 'none';
 	clearInterval(fx2);
 }
 
 function myFunctionBoton2 () {
+	for (var i = 0; i < no_timmer.length ; i++) {
+		no_timmer[i].className += " avoid_clicks";
+	}
+
 	clock_wrapper.style.display = 'flex';
-	clock_txt.innerHTML = 'Aguanta los 40 seg PUTITO y despues te mando al login'
+	clock_txt.innerHTML = 'Wait 40 seconds for restart and login again'
 	clock.innerHTML = 40;
 	fx3 = setInterval(CountDown1, 1000);
 	function CountDown1 () {
@@ -89,17 +119,21 @@ function myFunctionBoton2 () {
 			fx4 = setInterval(Redirect, 500);
 		}
 	}
+    serverPowerCycle();
 }
 
 
 function myFunctionBoton3 () {
-    let txt3 = '[{"nombre": "med"},{"nombre": "masi"}]';
-    console.log(txt3);
-    insert_wrapper(txt3);
+    serverOpenPort ();
+}
+
+function myFunctionBoton4 () {
+    serverClosePort ();
 }
 
 function Redirect () {
-	window.location.href = "index.html";
+    // window.location.href = "index.html";
+    window.location.replace('/login');
 }
 
 
@@ -149,9 +183,6 @@ socket.onmessage = e => {
                 lines += ']';
                 console.log(lines);
                 insert_wrapper(lines);                
-                // var texto = '[{"nombre": "maci"},{"nombre": "maci"},{"nombre": "maci"},{"nombre": "maci"}]';
-                // console.log(texto);
-                // insert_wrapper(texto);
 
             }
             else if (json_msg.redirect != undefined)
@@ -159,7 +190,22 @@ socket.onmessage = e => {
                 console.log("username: " + json_msg.redirect + " not allowed here");
                 window.location.replace('/login');
             }
+            else if (json_msg.new_user != undefined)
+            {
+                if (json_msg.new_user == 'inserted ok')
+                    CheckUser (1);
+                else if (json_msg.new_user == 'not inserted')
+                    CheckUser (0);
+            }
+            else if (json_msg.del_user != undefined)
+            {
+                if (json_msg.del_user == 'deleted ok')
+                    ShowMessage (1);
+                else if (json_msg.del_user == 'not deleted')
+                    ShowMessage (0);
+            }
 
+            
             
             // else if (json_msg.boton_canal != undefined)
             // {
@@ -187,11 +233,10 @@ socket.onmessage = e => {
 var btn = d.querySelector('input[value=REGISTER]');
 var psw = d.querySelector('input[name=psw]');
 var uname = d.querySelector('input[name=uname]');
-
-
 btn.onclick = function () {
-    var psw_txt = psw.value;
     var uname_txt = uname.value;
+    var psw_txt = psw.value;
+
 
     var json_data = {
         "username" : uname_txt,
@@ -205,6 +250,70 @@ btn.onclick = function () {
     var json_msg = JSON.stringify(json_pckt);
     // console.log(json_msg);
     socket.send(json_msg);
+    psw.value = "";
+    uname.value = "";
     
 }
 
+
+var already_register = d.querySelector('.already_register');
+function CheckUser (e) {
+    if (e==1) {
+	already_register.innerHTML = '* User registered successfully';
+	already_register.setAttribute('class','already_register green');
+    } else
+	already_register.innerHTML = '* The user already exists';
+	already_register.setAttribute('class','already_register red');
+    }
+}
+
+
+function Remover (pos, nombre) {
+    console.log("borrar user: " + nombre);
+    var json_pckt = {
+        "del_username" : nombre
+    };
+
+    var json_msg = JSON.stringify(json_pckt);
+    socket.send(json_msg);
+}
+
+
+function radioPowerCycle () {
+    var json_pckt = {
+        "powercycle" : "RADIO"
+    };
+
+    var json_msg = JSON.stringify(json_pckt);
+    socket.send(json_msg);
+}
+
+
+function serverPowerCycle () {
+    var json_pckt = {
+        "powercycle" : "SERVER"
+    };
+
+    var json_msg = JSON.stringify(json_pckt);
+    socket.send(json_msg);
+}
+
+
+function serverOpenPort () {
+    var json_pckt = {
+        "server_port" : "OPEN"
+    };
+
+    var json_msg = JSON.stringify(json_pckt);
+    socket.send(json_msg);
+}
+
+
+function serverClosePort () {
+    var json_pckt = {
+        "server_port" : "CLOSE"
+    };
+
+    var json_msg = JSON.stringify(json_pckt);
+    socket.send(json_msg);
+}
