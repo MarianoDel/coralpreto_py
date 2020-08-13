@@ -92,7 +92,8 @@ function getMembersName () {
     var resp = [];
 
     members.forEach(element => {
-        resp.push(element.name);
+        if (element.can_manage == "false")
+            resp.push(element.name);
     });
 
     return resp;

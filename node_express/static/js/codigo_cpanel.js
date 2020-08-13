@@ -60,6 +60,9 @@ function ShowMessage (e) {
 	user_deleted.innerHTML = '* The user was erased successfully';
 	user_deleted.setAttribute('class','already_register green');
     }
+    else if (e==2) {
+	user_deleted.innerHTML = '';
+    }
     else {
 	user_deleted.innerHTML = '* Something went wrong!';
 	user_deleted.setAttribute('class','already_register red');
@@ -192,17 +195,33 @@ socket.onmessage = e => {
             }
             else if (json_msg.new_user != undefined)
             {
-                if (json_msg.new_user == 'inserted ok')
+                if (json_msg.new_user == 'inserted ok') {
                     CheckUser (1);
-                else if (json_msg.new_user == 'not inserted')
+                    setTimeout(() => {
+                        CheckUser (2);
+                    }, 3000);
+                }
+                else if (json_msg.new_user == 'not inserted') {
                     CheckUser (0);
+                    setTimeout(() => {
+                        CheckUser (2);
+                    }, 3000);
+                }
             }
             else if (json_msg.del_user != undefined)
             {
-                if (json_msg.del_user == 'deleted ok')
+                if (json_msg.del_user == 'deleted ok') {
                     ShowMessage (1);
-                else if (json_msg.del_user == 'not deleted')
+                    setTimeout(() => {
+                        ShowMessage (2);
+                    }, 3000);
+                }
+                else if (json_msg.del_user == 'not deleted') {
                     ShowMessage (0);
+                    setTimeout(() => {
+                        ShowMessage (2);
+                    }, 3000);
+                }
             }
 
             
@@ -261,7 +280,9 @@ function CheckUser (e) {
     if (e==1) {
 	already_register.innerHTML = '* User registered successfully';
 	already_register.setAttribute('class','already_register green');
-    } else
+    } else if (e==2) {
+	already_register.innerHTML = '';
+    } else {
 	already_register.innerHTML = '* The user already exists';
 	already_register.setAttribute('class','already_register red');
     }

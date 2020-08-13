@@ -80,12 +80,14 @@ app.post(['/login', '/login.html'], urlencodedParser, (req, res) => {
     var username = req.body.uname;
     var password = req.body.psw;
 
-    if (username == 'manager' && password == 'manager') {
-        res.redirect('/cpanel');
-        last_username = username;
-    }
-    else if (members.checkUserPass(username, password)) {
-        res.redirect('/registrado');
+    console.log('new login user: ' + username + ' pass: ' + password);
+    if (members.checkUserPass(username, password)) {
+        if (members.isManager(username)) {
+            res.redirect('/cpanel');
+        }
+        else {
+            res.redirect('/registrado');
+        }
         last_username = username;
     }
     else {
