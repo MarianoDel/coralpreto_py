@@ -1,15 +1,3 @@
-const running_on_slackware = 1;
-const running_on_raspbian = !running_on_slackware;
-
-if (running_on_raspbian)
-{
-    var Gpio = require('onoff').Gpio;
-    console.log("gpios running on raspbian: " + running_on_raspbian);
-}
-else
-    console.log("gpios running on slackware: " + running_on_slackware);
-
-
 // Module Constants ------------------------------------------------------------
 const LED_B = 14;    //led blue servidor gpio14
 const ON_OFF = 15;
@@ -27,9 +15,13 @@ var bit2;
 var bit1;
 var bit0;
 
+var running_on_raspbian = false;
+function GpiosInit (running_os) {
+    if (running_os == 'raspbian') {
+        var Gpio = require('onoff').Gpio;
 
-function GpiosInit() {
-    if (running_on_raspbian) {
+        running_on_raspbian = true;
+
         ledBlue = new Gpio(LED_B, 'out');
         on_off = new Gpio(ON_OFF, 'out');
         ptt = new Gpio(PTT, 'out');
@@ -37,8 +29,10 @@ function GpiosInit() {
         bit1 = new Gpio(BIT1, 'out');
         bit0 = new Gpio(BIT0, 'out');
         console.log("gpios initialized on raspbian");
+    } else if (running_os == 'slackware') {
+        console.log("gpios initialized on slackware");
     } else {
-        console.log("gpios initialize");
+        console.log("gpios NOT initialized");
     }
 }
 

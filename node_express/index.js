@@ -15,8 +15,18 @@ const app = express();
 
 
 // First configs ---------------------------------------------------------------
-const running_on_slackware = true;
-const running_on_raspbian = !running_on_slackware;
+const running_os = process.argv[2];
+console.log('running on: ' + running_os);
+var running_on_slackware = false;
+if (running_os == 'slackware')
+    running_on_slackware = true;
+else if (running_os != 'raspbian') {
+    console.log('MUST CHOOSE slackware or raspbian, terminating process');
+    process.exit();
+}
+    
+// const running_on_slackware = true;
+// const running_on_raspbian = !running_on_slackware;
 
 var secure_hostname = "";
 if (running_on_slackware)
@@ -380,7 +390,7 @@ secure_server.on('upgrade', (request, socket, head) => {
 
 
 // Initialize Gpios module -----------------------------------------------------
-gpios.GpiosInit();
+gpios.GpiosInit(running_os);
 gpios.LedBlueOff();
 gpios.OnOff_Off();
 gpios.Ptt_Off();
@@ -543,7 +553,7 @@ function create_buffer_int16 (signal_options) {
 var audio_in_options;
 var audio_out_options;
 if (running_on_slackware) {
-    console.log('\nRunning on Slackware!!!\n');
+    console.log('\nPortAudio running on Slackware!!!\n');
     audio_in_options = {
         inOptions: {
             channelCount: 1,
@@ -568,7 +578,7 @@ if (running_on_slackware) {
         }
     }
 } else {
-    console.log('\nRunning on Raspbian!!!\n');
+    console.log('\nPortAudio running on Raspbian!!!\n');
     audio_in_options = {
         inOptions: {
             channelCount: 1,

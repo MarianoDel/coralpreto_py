@@ -1,5 +1,3 @@
-// INSERCIÓN DE USERS EN CPANEL
-
 var _c = console.log;
 var d = document;
 
@@ -43,18 +41,8 @@ function insert2(txt) {
 
 insert2(txt2);
 
-//al final del archivo
-// function Remover (pos, nombre) {
-// 	var aUsers = JSON.parse(txt2);
-// 	aUsers.splice(pos,1);
-// 	_c("esto es remover a: " + aUsers + " con nombre: " + nombre);
-// 	var myJSON = JSON.stringify(aUsers);
-// 	txt2 = myJSON;
-
-// }
 
 var user_deleted = d.querySelector('.user_deleted');
-
 function ShowMessage (e) {
     if (e==1) {
 	user_deleted.innerHTML = '* The user was erased successfully';
@@ -69,6 +57,19 @@ function ShowMessage (e) {
     }
 }
 
+
+var already_register = d.querySelector('.already_register');
+function CheckUser (e) {
+    if (e==1) {
+	already_register.innerHTML = '* User registered successfully';
+	already_register.setAttribute('class','already_register green');
+    } else if (e==2) {
+	already_register.innerHTML = '';
+    } else {
+	already_register.innerHTML = '* The user already exists';
+	already_register.setAttribute('class','already_register red');
+    }
+}
 
 var fx1, fx2, fx3, fx4;
 
@@ -223,25 +224,6 @@ socket.onmessage = e => {
                     }, 3000);
                 }
             }
-
-            
-            
-            // else if (json_msg.boton_canal != undefined)
-            // {
-            //     console.log("boton_canal: " + json_msg.boton_canal);
-            //     cambiaBoton(json_msg.boton_canal);
-            //     // cambiaBoton('72');                
-            // }
-            // else if (json_msg.show_uname != undefined)
-            // {
-            //     console.log("username: " + json_msg.show_uname);
-            //     insertUser(json_msg.show_uname);
-            // }
-            // else if (json_msg.redirect != undefined)
-            // {
-            //     console.log("username: " + json_msg.redirect + " not allowed here");
-            //     window.location.replace('/login');
-            // }
         }
         catch {
         }
@@ -275,18 +257,6 @@ btn.onclick = function () {
 }
 
 
-var already_register = d.querySelector('.already_register');
-function CheckUser (e) {
-    if (e==1) {
-	already_register.innerHTML = '* User registered successfully';
-	already_register.setAttribute('class','already_register green');
-    } else if (e==2) {
-	already_register.innerHTML = '';
-    } else {
-	already_register.innerHTML = '* The user already exists';
-	already_register.setAttribute('class','already_register red');
-    }
-}
 
 
 function Remover (pos, nombre) {
