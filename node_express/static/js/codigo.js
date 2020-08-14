@@ -139,7 +139,6 @@ for (var i = 0; i < btns.length; i++) {
 
 
 function cambiaBoton (canal) {
-    _c('puto');
     for (var i = 0; i < aFrecuencias.length; i++) {
 
         if (btns[i].getAttribute('data-channel') == canal) {
@@ -211,27 +210,42 @@ insert(txt);
 var ptt_txt = d.querySelector('.apretando');
 var send_mic_audio = false;
 function apreto() {
-    if (socket.readyState == WebSocket.OPEN) {
-        ptt_txt.innerHTML = 'PTT On!';
-        _c('ptt in on');
-        var json_msg = JSON.stringify({"ptt" : "ON"});
-        socket.send(json_msg);
-        send_mic_audio = true;
+    if (!play_pause_button_in_play) {
+        if (socket.readyState == WebSocket.OPEN) {
+            ptt_txt.innerHTML = 'PTT On!';
+            _c('ptt in on');
+            var json_msg = JSON.stringify({"ptt" : "ON"});
+            socket.send(json_msg);
+            send_mic_audio = true;
+        } else {
+            ptt_txt.innerHTML = 'Server disconnected!!';
+        }
     } else {
-        ptt_txt.innerHTML = 'Server disconnected!!';
+        ptt_txt.innerHTML = 'Listen before transmit!!';
     }
-    // oscillator = createOscillator();
-    // oscillator.start();
 }
+
 function suelto() {
     ptt_txt.innerHTML = 'PTT Off';
-    _c('ptt in off');
     send_mic_audio = false;
+
+    // _c('ptt in off');
+    // if (socket.readyState == WebSocket.OPEN) {
+    //     var json_msg = JSON.stringify({"ptt" : "OFF"});
+    //     socket.send(json_msg);
+    // }
+
+    setTimeout(() => {
+        ptt_delayed_off();
+    }, 1500);
+}
+
+function ptt_delayed_off () {
+    _c('ptt delayed off');
     if (socket.readyState == WebSocket.OPEN) {
         var json_msg = JSON.stringify({"ptt" : "OFF"});
         socket.send(json_msg);
     }
-    // oscillator.stop();    
 }
 
 // Cambio de boton PLAY a PAUSE

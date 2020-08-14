@@ -33,12 +33,14 @@ function getSocketLostName (sklist, sklist_bkp, clients_array) {
     let bkp_qtty = sklist_bkp.size;
     console.log('actual ws: ' + current_qtty +
                 ' bkp ws: ' + bkp_qtty);
-    sklist_bkp.forEach(element => {
-        if (!sklist.has(element)) {
-            sk_lost_finded = sk_index;
-        }
-        sk_index++;
-    });
+    try {
+        sklist_bkp.forEach(element => {
+            if (!sklist.has(element)) {
+                sk_lost_finded = sk_index;
+            }
+            sk_index++;
+        });
+    } catch {}
 
     const user_disconneted = clients_array[sk_lost_finded].client;
     console.log('lost finded on: ' + sk_lost_finded +

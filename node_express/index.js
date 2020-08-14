@@ -196,11 +196,35 @@ wsServer.on('connection', (socket, req) => {
                 else if (json_msg.audio != undefined) {
                     console.log('user: ' + uname + ' audio: ' + json_msg.audio);
                     if (json_msg.audio == 'PLAY') {
-                        start_sending_audio();
+                        //Tx messages
+                        var json_entry = {
+                            "nombre":uname,
+                            "comentario":"is listen now",
+                            "status":"1"
+                        };
+                        
+                        json_res = {
+                            "tabla" : "undef",
+                            "data": tableAdd(json_entry)
+                        };
+                        sku.socketSendBroadcast(JSON.stringify(json_res), wsServer.clients);
+
                         myClientArray[socket_index].listen = true;
                     }
                     else {
-                        stop_sending_audio();
+                        //Tx messages
+                        var json_entry = {
+                            "nombre":uname,
+                            "comentario":"stop listening",
+                            "status":"1"
+                        };
+                        
+                        json_res = {
+                            "tabla" : "undef",
+                            "data": tableAdd(json_entry)
+                        };
+                        sku.socketSendBroadcast(JSON.stringify(json_res), wsServer.clients);
+                        
                         myClientArray[socket_index].listen = false;
                     }
                 }
@@ -359,29 +383,26 @@ wsServer.on('connection', (socket, req) => {
 
         //busco la posicion del set, quito ese cliente
         let who = sku.getSocketLostName (wsServer.clients, mySocketsBkp, myClientArray);
-        let qtty = wsServer.clients.size;
-
-        // si todavia queda alguien conectado le aviso de esta desconexion
-        if (qtty) {
-            
-        //Tx messages
-        var json_entry = {
-            "nombre":who,
-            "comentario":"disconnected",
-            "status":"1"
-        };
-
-        json_res = {
-            "tabla" : "undef",
-            "data": tableAdd(json_entry)
-        };
-        sku.socketSendBroadcast(JSON.stringify(json_res), wsServer.clients);
         
+        // si todavia hay alguien le aviso
+        let qtty = wsServer.clients.size;
+        if (qtty) {
+            //Tx messages
+            var json_entry = {
+                "nombre":who,
+                "comentario":"disconnected",
+                "status":"1"
+            };
+
+            json_res = {
+                "tabla" : "undef",
+                "data": tableAdd(json_entry)
+            };
+            sku.socketSendBroadcast(JSON.stringify(json_res), wsServer.clients);
         }
-        else {
-            // clearInterval(interval);
-            gpios.LedBlueBlinking_Off();
-        }
+        else
+            gpios.LedBlueBlinking_Off();            
+
     });
 });
 
@@ -457,15 +478,6 @@ function stop_sending_harcoded_audio () {
     // End of Harcoded Audio by timeout
 }
 
-
-var single_client_play = false;
-function start_sending_audio () {
-    single_client_play = true;
-}
-
-function stop_sending_audio () {
-    single_client_play = false;
-}
 
 // Timed harcoded signal data --------------------------------------------------
 // var harcodedbuffer = new Int16Array(size);
@@ -631,15 +643,18 @@ var pck_cnt = 0;
 function onDataCallback (buffer) {
     wsServer.clients.forEach(function each(client) {
         if (client.readyState === ws.OPEN) {
-            if (single_client_play)
-            {
+            // if (single_client_play)
+            // {
+            //     client.send(buffer);
+            //     console.log('pkt: ' + pck_cnt + ' size: ' + buffer.length  + ' t: ' + buffer.timestamp);
+            // }
+            // else
+            //     console.log('flushed portaudio size: ' + buffer.length);
+            let this_client_index = sku.getSocketIndex(client, wsServer.clients);
+            if (myClientArray[this_client_index].listen == true) {
+                // console.log('sent to: ' + myClientArray[this_client_index].client);
                 client.send(buffer);
-                console.log('pkt: ' + pck_cnt + ' size: ' + buffer.length  + ' t: ' + buffer.timestamp);
             }
-            else
-                console.log('flushed portaudio size: ' + buffer.length);
-            // let this_client = sku.getSocketIndex(client);
-            // if (sku
         }
     });
     pck_cnt++;
@@ -673,15 +688,15 @@ function noop() {}
 
 function heartbeat() {
     this.isAlive = true;
-    console.log('keepalive');
+    // console.log('keepalive');
 }
 
 const interval = setInterval(function ping() {
-    console.log('interval');
+    // console.log('interval');
     wsServer.clients.forEach(function each(socket) {
         if (socket.isAlive === false)
         {
-            console.log('no comms disconnect');
+            console.log('no comms disconnect on set interval');
             return socket.terminate();
         }
 
