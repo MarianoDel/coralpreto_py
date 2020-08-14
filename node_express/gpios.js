@@ -195,57 +195,57 @@ function Bit0_Off() {
 
 
 function ChannelToGpios (channel_string) {
-    if (running_on_slackware)
+    if (!running_on_raspbian)
         return;
 
     switch (channel_string)
     {
         case '09':
-        Bit0_Off();
+        Bit0_On();
         Bit1_Off();
         Bit2_Off();
         break;
 
         case '12':
-        Bit0_On();
-        Bit1_Off();
+        Bit0_Off();
+        Bit1_On();
         Bit2_Off();
         break;
 
         case '14':
-        Bit0_Off();
+        Bit0_On();
         Bit1_On();
         Bit2_Off();
         break;
 
         case '71':
-        Bit0_On();
-        Bit1_On();
-        Bit2_Off();
+        Bit0_Off();
+        Bit1_Off();
+        Bit2_On();
         break;
 
         case '72':
-        Bit0_Off();
+        Bit0_On();
         Bit1_Off();
         Bit2_On();
         break;
 
         case '74':
-        Bit0_On();
-        Bit1_Off();
-        Bit2_On();
-        break;
-
-        case '77':
         Bit0_Off();
         Bit1_On();
         Bit2_On();
         break;
 
-        case '81':
+        case '77':
         Bit0_On();
         Bit1_On();
         Bit2_On();
+        break;
+
+        case '81':
+        Bit0_Off();
+        Bit1_Off();
+        Bit2_Off();
         break;
         
         default:
@@ -257,61 +257,61 @@ function ChannelToGpios (channel_string) {
 }
 
 function GpiosToChannel () {
-    if (running_on_slackware)
+    if (!running_on_raspbian)
         return '09';
     
-    if ((bit0.readSync() === 0) &&
+    if ((bit0.readSync() === 1) &&
         (bit1.readSync() === 0) &&
         (bit2.readSync() === 0))
     {
         return '09';
     }
 
-    if ((bit0.readSync() === 1) &&
-        (bit1.readSync() === 0) &&
+    if ((bit0.readSync() === 0) &&
+        (bit1.readSync() === 1) &&
         (bit2.readSync() === 0))
     {
         return '12';
     }
 
-    if ((bit0.readSync() === 0) &&
+    if ((bit0.readSync() === 1) &&
         (bit1.readSync() === 1) &&
         (bit2.readSync() === 0))
     {
         return '14';
     }
 
-    if ((bit0.readSync() === 1) &&
-        (bit1.readSync() === 1) &&
-        (bit2.readSync() === 0))
+    if ((bit0.readSync() === 0) &&
+        (bit1.readSync() === 0) &&
+        (bit2.readSync() === 1))
     {
         return '71';
     }
 
-    if ((bit0.readSync() === 0) &&
+    if ((bit0.readSync() === 1) &&
         (bit1.readSync() === 0) &&
         (bit2.readSync() === 1))
     {
         return '72';
     }
 
-    if ((bit0.readSync() === 1) &&
-        (bit1.readSync() === 0) &&
+    if ((bit0.readSync() === 0) &&
+        (bit1.readSync() === 1) &&
         (bit2.readSync() === 1))
     {
         return '74';
     }
 
-    if ((bit0.readSync() === 0) &&
+    if ((bit0.readSync() === 1) &&
         (bit1.readSync() === 1) &&
         (bit2.readSync() === 1))
     {
         return '77';
     }
 
-    if ((bit0.readSync() === 1) &&
-        (bit1.readSync() === 1) &&
-        (bit2.readSync() === 1))
+    if ((bit0.readSync() === 0) &&
+        (bit1.readSync() === 0) &&
+        (bit2.readSync() === 0))
     {
         return '81';
     }

@@ -358,10 +358,27 @@ wsServer.on('connection', (socket, req) => {
         console.log('disconnect client close');
 
         //busco la posicion del set, quito ese cliente
-        let lost = sku.getSocketLostIndex(wsServer.clients, mySocketsBkp, myClientArray);
+        let who = sku.getSocketLostName (wsServer.clients, mySocketsBkp, myClientArray);
         let qtty = wsServer.clients.size;
 
-        if (!qtty) {
+        // si todavia queda alguien conectado le aviso de esta desconexion
+        if (qtty) {
+            
+        //Tx messages
+        var json_entry = {
+            "nombre":who,
+            "comentario":"disconnected",
+            "status":"1"
+        };
+
+        json_res = {
+            "tabla" : "undef",
+            "data": tableAdd(json_entry)
+        };
+        sku.socketSendBroadcast(JSON.stringify(json_res), wsServer.clients);
+        
+        }
+        else {
             // clearInterval(interval);
             gpios.LedBlueBlinking_Off();
         }
@@ -621,6 +638,8 @@ function onDataCallback (buffer) {
             }
             else
                 console.log('flushed portaudio size: ' + buffer.length);
+            // let this_client = sku.getSocketIndex(client);
+            // if (sku
         }
     });
     pck_cnt++;

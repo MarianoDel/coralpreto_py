@@ -26,7 +26,7 @@ function getUserNameBySocket (sk_this, sklist, clients_array) {
 }
 
 
-function getSocketLostIndex (sklist, sklist_bkp, clients_array) {
+function getSocketLostName (sklist, sklist_bkp, clients_array) {
     let sk_index = 0;
     let sk_lost_finded = 0;
     let current_qtty = sklist.size;
@@ -39,12 +39,16 @@ function getSocketLostIndex (sklist, sklist_bkp, clients_array) {
         }
         sk_index++;
     });
+
+    const user_disconneted = clients_array[sk_lost_finded].client;
     console.log('lost finded on: ' + sk_lost_finded +
-                ' user: ' + clients_array[sk_lost_finded].client +
+                ' user: ' + user_disconneted +
                 ' disconnected');
     clients_array.splice(sk_lost_finded, 1);
     console.log(clients_array);
     copySets(sklist_bkp, sklist);
+
+    return user_disconneted;
 }
 
 
@@ -74,7 +78,7 @@ function socketSendBroadcastNoSelf (msg, sk_this, sklist) {
 // Exported Functions ----------------------------------------------------------
 module.exports.getSocketIndex = getSocketIndex;
 module.exports.getUserNameBySocket = getUserNameBySocket;
-module.exports.getSocketLostIndex = getSocketLostIndex;
+module.exports.getSocketLostName = getSocketLostName;
 module.exports.copySets = copySets;
 module.exports.socketSendBroadcast = socketSendBroadcast;
 module.exports.socketSendBroadcastNoSelf = socketSendBroadcastNoSelf;
