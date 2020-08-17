@@ -358,6 +358,7 @@ wsServer.on('connection', (socket, req) => {
                     }
                     else if (json_msg.powercycle == 'SERVER') {
                         console.log('Rebooting the server!!!');
+                        rebootServer();
                     }
                 }
                 else if (json_msg.server_port != undefined) {
@@ -426,6 +427,28 @@ secure_server.on('upgrade', (request, socket, head) => {
     });
 });
 
+
+// Manager Routines ------------------------------------------------------------
+function rebootServer () {
+    const { spawn } = require('child_process');
+    const ls = spawn("ls", ["-la"]);
+
+    ls.stdout.on("data", data => {
+        console.log(`stdout: ${data}`);
+    });
+
+    ls.stderr.on("data", data => {
+        console.log(`stderr: ${data}`);
+    });
+
+    ls.on('error', (error) => {
+        console.log(`error: ${error.message}`);
+    });
+
+    ls.on("close", code => {
+        console.log(`child process exited with code ${code}`);
+    });
+}
 
 // Initialize Gpios module -----------------------------------------------------
 gpios.GpiosInit(running_os);
