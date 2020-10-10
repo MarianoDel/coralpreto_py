@@ -60,14 +60,16 @@ var urlencodedParser = bodyParser.urlencoded({ extended: false })
 app.all('*', ensureSecure); // at top of routing calls
 
 function ensureSecure(req, res, next){
-    if ((req.secure) && (req.hostname == secure_hostname)) {
+    // if ((req.secure) && (req.hostname == secure_hostname)) {
+    if (req.secure) {        
         // req is secure and to proper hostname
         // console.log('ensure secure: ' + req.secure + ' to host: ' + req.hostname);
         return next();
     };
     // handle port numbers if you need non defaults
-    // let redirect = 'https://' + req.hostname + ':' + secure_port + req.url;
-    let redirect = 'https://' + secure_hostname + ':' + secure_port + req.url;    
+    let redirect = 'https://' + req.hostname + ':443' + req.url;
+    // let redirect = 'https://' + req.hostname + ':' + secure_port + req.url;    
+    // let redirect = 'https://' + secure_hostname + ':' + secure_port + req.url;    
     console.log('redirected to: ' + redirect);
     res.redirect(redirect); // express 4.x
 }
