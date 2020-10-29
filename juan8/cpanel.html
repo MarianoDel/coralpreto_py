@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<link rel="stylesheet" href="css/estilos.css">
+	<title>CPanel - Pilot Age SA</title>
+</head>
+<body>
+	<div id="cpanel_container">
+		<p>cPanel</p>
+		<div class="wrap_botones_cpanel">
+			<button class="botones_cpanel" onclick="myFunctionBoton1()">Radio Power Cycle</button>
+			<button class="botones_cpanel" onclick="myFunctionBoton2()">Server Power Cycle</button>
+			<button class="botones_cpanel" onclick="myFunctionBoton3()">Remote Access Enable</button>
+			<button class="botones_cpanel" onclick="myFunctionBoton4()">Remote Access Blocked</button>
+		</div>
+		<div id="count_down">
+			<p></p>
+			<span></span>
+		</div>
+		<aside class="new_user">
+			<div class="titulo-cpanel">
+				<span></span>
+				<p>ADD NEW USER</p>
+				<span></span>
+			</div>
+			<p class="already_register"></p>
+			<form>
+				<input type="text" placeholder="USERNAME" name="uname" required>
+				<input type="password" placeholder="PASSWORD" name="psw" required>
+				<input type="button" value="REGISTER">
+			</form>
+		</aside>
+		<aside class="wrap_table">
+			<div class="titulo-cpanel">
+				<span></span>
+				<p>REGISTERED USERS</p>
+				<span></span>
+			</div>
+			<p class="user_deleted"></p>
+			<table>
+				<thead>
+					<tr>
+						<th>USERNAME</th>
+						<th>ACTIONS</th>
+					</tr>
+				</thead>
+				<tbody id="usuarios_cpanel">
+				</tbody>
+			</table>
+		</aside>
+	</div>
+	<script src="js/codigo_cpanel.js"></script>
+</body>
+</html>
