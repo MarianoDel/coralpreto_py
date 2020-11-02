@@ -7,6 +7,8 @@ var path = require('path');
 const portAudio = require('naudiodon');
 const fs = require('fs');
 
+
+
 const members = require('./members');
 const gpios = require('./gpios');
 const sku = require('./socket_utils');
@@ -623,6 +625,16 @@ function create_buffer_int16 (signal_options) {
 
 // ai.start();
 
+// Harcoded Data Samples -------------------------------------------------------
+// const signal_opt2 = {
+//     samples : 44100,
+//     frequency : 400,
+//     sampleRate : 44100,
+//     amplitude : 32767
+// }
+// const buffer_harcoded = create_buffer_int16(signal_opt2);
+// End of Harcoded Data Samples ------------------------------------------------
+
 // Audio input & output --------------------------------------------------------
 var audio_in_options;
 var audio_out_options;
@@ -688,13 +700,6 @@ var pck_cnt = 0;
 function onDataCallback (buffer) {
     wsServer.clients.forEach(function each(client) {
         if (client.readyState === ws.OPEN) {
-            // if (single_client_play)
-            // {
-            //     client.send(buffer);
-            //     console.log('pkt: ' + pck_cnt + ' size: ' + buffer.length  + ' t: ' + buffer.timestamp);
-            // }
-            // else
-            //     console.log('flushed portaudio size: ' + buffer.length);
             let this_client_index = sku.getSocketIndex(client, wsServer.clients);
             if (myClientArray[this_client_index].listen == true) {
                 // console.log('sent to: ' + myClientArray[this_client_index].client);
@@ -706,13 +711,6 @@ function onDataCallback (buffer) {
 };
 
 var start_ao = false;
-const signal_opt2 = {
-    samples : 44100,
-    frequency : 400,
-    sampleRate : 44100,
-    amplitude : 32767
-}
-const buffer_harcoded = create_buffer_int16(signal_opt2);
 function onRxSamples (buffer) {
     if (!start_ao) {
         ao.start();
@@ -726,6 +724,8 @@ function onRxSamples (buffer) {
 }
 
 ai.start();
+
+// End of Audio input & output -------------------------------------------------
 
 
 // Check for ws connections still alive ----------------------------------------

@@ -117,19 +117,29 @@ function OnOff_Cycle_On () {
 /////////
 // Ptt //
 /////////
+var ptt_prot_timeout;
 function Ptt_On() {
     if (running_on_raspbian) {
         ptt.writeSync(1);
+        ptt_prot_timeout = setTimeout(function() {
+            ptt.writeSync(0);
+        },15*1000);
+
     } else {
         console.log("ptt on");
+        ptt_prot_timeout = setTimeout(function() {
+            console.log("ptt timeout protection off");
+        },15*1000);        
     }
 }
 
 function Ptt_Off() {
     if (running_on_raspbian) {
         ptt.writeSync(0);
+        clearTimeout(ptt_prot_timeout);
     } else {
         console.log("ptt off");
+        clearTimeout(ptt_prot_timeout);        
     }
 }
 

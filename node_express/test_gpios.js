@@ -21,13 +21,17 @@ function TestBlue () {
 }
 
 function TestPtt () {
+    let time_active = 20;
     (async () => {
-        console.log ("Ptt on for 5 secs");
+        console.log ("Ptt on for " + time_active + " secs");
+        if (time_active > 15)
+            console.log ("Ptt protection timeout must work!");        
+        
         gpios.Ptt_On();
         await setTimeout(() => {
             gpios.Ptt_Off();
             console.log("Ptt off");
-        }, 5000);
+        }, time_active * 1000);
     })();
 }
 
@@ -71,8 +75,8 @@ function TestCycle () {
 ////////////////
 InitialValues();
 // TestBlue();
-// TestPtt();
+TestPtt();
 // TestEncendido();
 // TestChannel();
-TestCycle();
+// TestCycle();
 
