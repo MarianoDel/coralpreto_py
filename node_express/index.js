@@ -474,6 +474,34 @@ function rebootServer () {
     }
 }
 
+
+function forceGC() {
+    if (global.gc) {
+        global.gc();
+        let d = new Date();
+        let h = d.getHours();
+        let m = d.getMinutes();        
+
+        console.log(process.memoryUsage());
+        h = h.toString();
+        while (h.length < 2) h = "0" + h;
+
+        m = m.toString();
+        while (m.length < 2) m = "0" + m;
+        
+        console.warn(`GC activated!!! ${h}:${m}`);
+    } else {
+        console.warn('No GC hook! Start your program as `node --expose-gc file.js`.');
+    }
+}
+
+const minits_to_gc = 1;
+var timer_gc = setInterval(() => {
+    forceGC();
+}, (minits_to_gc * 60 * 1000));
+
+
+
 // Initialize Gpios module -----------------------------------------------------
 gpios.GpiosInit(running_os);
 gpios.LedBlueOff();

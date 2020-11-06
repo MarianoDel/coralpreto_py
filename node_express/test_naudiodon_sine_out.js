@@ -3,7 +3,8 @@ const portAudio = require('naudiodon');
 const running_on_slackware = true;
 const running_on_raspbian = !running_on_slackware;
 
-const stop_in_secs = 10;    //or 0 if is continuous
+const stop_in_secs = 400 * 5;    //or 0 if is continuous
+// const stop_in_secs = 40;    //or 0 if is continuous
 
 // Chequeo los dispositivos disponibles ----------------------------------------
 console.log(portAudio.getDevices());
@@ -63,21 +64,36 @@ console.log('check for chunks cuts [0]: ' + buffer[0] +
             ' [' + (buffer.length - 2) + ']: ' + buffer[(buffer.length - 2)] +
             ' [' + (buffer.length - 1) + ']: ' + buffer[(buffer.length - 1)]);
 var buffer_new = Buffer.from(buffer.buffer);
+buffer = null;
 
 
 // Interval to send audio samples to the device --------------------------------
 let timerId = setInterval(() => {
-    ao.write(buffer_new);
-    console.log(`buffer_new length: ${buffer_new.length} pck_cnt: ${pck_cnt}`);
+    if (ao != null) {
+        ao.write(buffer_new);
+        console.log(`buffer_new length: ${buffer_new.length} pck_cnt: ${pck_cnt}`);
+    } else {
+        console.log(`ao is null now pck_cnt: ${pck_cnt}`);
+    }
     pck_cnt++;
     
 }, (chunk_time_ms - 20));
 
 
+// if (stop_in_secs) {
+//     setTimeout(() => {
+//         clearTimeout(timerId);
+//         console.log('test ended');
+//     }, stop_in_secs * 1000);
+// }
+
 if (stop_in_secs) {
     setTimeout(() => {
-        clearTimeout(timerId);
-        console.log('test ended');
+        console.log('clearing portaudio');
+        ao.quit();
+        ao = null;
+        // clearInterval(timerId);
+        // timerId = null;
     }, stop_in_secs * 1000);
 }
 

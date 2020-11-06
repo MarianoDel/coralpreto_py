@@ -79,7 +79,7 @@ function LedBlueBlinking_Callback () {
         else
             LedBlueOn();
     } else {
-        console.log("led blue cb");
+        // console.log("led blue cb");
     }
 }
 

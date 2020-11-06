@@ -97,7 +97,7 @@
 ** Graba archivos de audio?
 ** Mejorar calidad del mic, se escucha mucho ruido de fondo
 
-
+   
 * MongoDB Pymongo
   https://api.mongodb.com/python/current/tutorial.html#tutorial
 
@@ -234,3 +234,54 @@
     maximiliano
     su pi
 
+** Frenar servicio
+   $ sudo systemctl stop clock.service
+
+* DuckDNS
+Creamos el fichero
+ nano duck.sh
+Y copiamos el texto que tienes en la página web con el token de tu nombre de dominio
+
+echo url="https://www.duckdns.org/update?domains=vhfpilotage&token=0f8b5f5e-ef01-4127-aca6-b38c8005c6f5&ip=" | curl -k -o ~/duckdns/duck.log -K -
+
+Damos permisos de ejecución al fichero
+ chmod 700 duck.sh
+
+Editamos el servicio cron para hacer que el fichero se ejecute cada 5 minutos
+ crontab -e
+
+Y copiamos el siguiente texto
+*/5 * * * * ~/duckdns/duck.sh >/dev/null 2>&1
+
+Para guardar el fichero pulsamos CTRL+x
+
+Probamos que el script funciona
+ ./duck.sh
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100     2    0     2    0     0      2      0 --:--:-- --:--:-- --:--:--     2
+
+Esto creará un fichero llamado duck.log, el cual tendrá dos valores OK, si todo ha ido bien o bad KO si ha habido algún problema.
+cat duck.log
+OK
+A partir de ahora., cada vez que se acceda al nombre de dominio vhfpilotage.duckdns.org estaré accediendo al servidor, concretamente al puerto 80 (puerto por defecto)
+
+* Inspeccionar codigo Node.JS
+** con Vivaldi
+   - ejecuto el script
+     $ node --inspect index.js slackware
+
+   - en vivaldi busco para abrir la consola, deberia encontrar el proceso index.js corriendo con su PID
+     vivaldi://inspect
+
+* Fuerzo GC
+** Agrego una funcion que la voy a llamar con un timer de 2horas
+function forceGC()
+   if (global.gc) {
+      global.gc();
+   } else {
+      console.warn('No GC hook! Start your program as `node --expose-gc file.js`.');
+   }
+}
+
+** Debo hacer correr el programa con --expose-gc
