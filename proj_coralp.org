@@ -55,7 +55,7 @@
     $ soxi output.wav
 
 *** Para escuchar el wav con ffmpeg
-    - con ffmpeg instalado tengo el wrapper ffmplay
+    - con ffmpeg instalado tengo el wrapper ffplay
     $ ffplay 2minutos.wav
 
 ** Uso de wave lib-std de python
@@ -285,3 +285,7 @@ function forceGC()
 }
 
 ** Debo hacer correr el programa con --expose-gc
+
+* DuckDNS specific coralpetro config
+** duckdns account
+   [[./duck_account.org][archivo de la cuenta]]
